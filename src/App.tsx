@@ -409,6 +409,7 @@ export default function App() {
   };
 
   const handleAddAnnouncement = async (ancData: Partial<Announcement>) => {
+    const timeStr = new Date().toISOString().replace('T', ' ').substring(0, 19);
     const newAnc: Announcement = {
       id: `anc-${Date.now()}`,
       title: ancData.title || 'Pengumuman Baru Yayasan',
@@ -422,6 +423,20 @@ export default function App() {
       priority: ancData.priority || 'Normal'
     };
     setAnnouncements(prev => [newAnc, ...prev]);
+
+    // Dispatch automatic system notification log
+    const notifLog: NotificationLog = {
+      id: `notif-${Date.now()}`,
+      type: 'Push Alert',
+      recipient: `Audience: ${newAnc.targetAudience} (${newAnc.educationLevel})`,
+      subject: `[PENGUMUMAN] ${newAnc.title}`,
+      body: `${newAnc.content} - Dipublikasikan oleh ${newAnc.author}`,
+      sentAt: timeStr,
+      status: 'Terkirim',
+      triggeredBy: `Penyiaran Pengumuman oleh ${newAnc.author}`,
+      category: 'Pengumuman'
+    };
+    setNotifications(prev => [notifLog, ...prev]);
   };
 
   const handleAddCalendarEvent = async (eventData: Partial<CalendarEvent>) => {
@@ -601,10 +616,12 @@ export default function App() {
               tuition={tuition}
               ppdb={ppdb}
               announcements={announcements}
+              events={events}
               currentUser={currentUser}
               settings={settings}
               activeLevel={activeLevel}
               onNavigate={tab => setActiveTab(tab)}
+              onUpdateSettings={handleUpdateSettings}
             />
           )}
 

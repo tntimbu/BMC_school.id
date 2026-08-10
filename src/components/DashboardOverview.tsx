@@ -24,9 +24,16 @@ import {
   Globe,
   X,
   Radio,
-  ExternalLink
+  ExternalLink,
+  Calendar,
+  Plus,
+  Edit,
+  Save,
+  Send,
+  Info,
+  ShieldCheck
 } from 'lucide-react';
-import { Student, Grade, AttendanceRecord, TuitionRecord, PPDBApplication, Announcement, UserProfile, SchoolSettings, EducationLevel } from '../types';
+import { Student, Grade, AttendanceRecord, TuitionRecord, PPDBApplication, Announcement, UserProfile, SchoolSettings, EducationLevel, CalendarEvent } from '../types';
 import { ActiveTab } from './Sidebar';
 
 interface DashboardOverviewProps {
@@ -36,10 +43,12 @@ interface DashboardOverviewProps {
   tuition: TuitionRecord[];
   ppdb: PPDBApplication[];
   announcements: Announcement[];
+  events?: CalendarEvent[];
   currentUser: UserProfile;
   settings: SchoolSettings;
   activeLevel?: EducationLevel | 'Semua';
   onNavigate: (tab: ActiveTab) => void;
+  onUpdateSettings?: (updated: Partial<SchoolSettings>) => void;
 }
 
 export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
@@ -49,17 +58,31 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
   tuition,
   ppdb,
   announcements,
+  events = [],
   currentUser,
   settings,
   activeLevel = 'Semua',
-  onNavigate
+  onNavigate,
+  onUpdateSettings
 }) => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showRefreshToast, setShowRefreshToast] = useState(false);
   const [dismissBroadcast, setDismissBroadcast] = useState(false);
+  const [showBroadcastModal, setShowBroadcastModal] = useState(false);
+
+  // Broadcast Form State
+  const [alertTitle, setAlertTitle] = useState(settings.broadcastNotification?.title || '');
+  const [alertMessage, setAlertMessage] = useState(settings.broadcastNotification?.message || '');
+  const [alertType, setAlertType] = useState<'warning' | 'danger' | 'info' | 'success'>(
+    settings.broadcastNotification?.type || 'warning'
+  );
+  const [alertActive, setAlertActive] = useState(settings.broadcastNotification?.active ?? true);
+
   const [refreshTime, setRefreshTime] = useState(() =>
     new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
   );
+
+  const isAdminOrSuper = currentUser.role === 'admin' || currentUser.role === 'superadmin';
 
   const handleRefreshData = () => {
     setIsRefreshing(true);
@@ -71,11 +94,36 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
     }, 650);
   };
 
+  const handleSaveBroadcast = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!alertTitle.trim() || !alertMessage.trim()) {
+      alert('Mohon isi Judul dan Pesan Alert!');
+      return;
+    }
+
+    const updatedBroadcast = {
+      active: alertActive,
+      title: alertTitle,
+      message: alertMessage,
+      type: alertType,
+      date: new Date().toISOString().split('T')[0]
+    };
+
+    if (onUpdateSettings) {
+      onUpdateSettings({ broadcastNotification: updatedBroadcast });
+    }
+
+    setShowBroadcastModal(false);
+    setDismissBroadcast(false);
+    alert('Alert Pemberitahuan Dashboard berhasil disebarkan!');
+  };
+
   // Filter data by active level
   const filteredStudents = activeLevel === 'Semua' ? students : students.filter(s => s.educationLevel === activeLevel);
   const filteredGrades = activeLevel === 'Semua' ? grades : grades.filter(g => g.educationLevel === activeLevel);
   const filteredAttendance = activeLevel === 'Semua' ? attendance : attendance.filter(a => a.educationLevel === activeLevel);
   const filteredTuition = activeLevel === 'Semua' ? tuition : tuition.filter(t => t.educationLevel === activeLevel);
+  const filteredEvents = activeLevel === 'Semua' ? events : events.filter(e => e.educationLevel === 'Semua' || e.educationLevel === activeLevel);
 
   // Stats Calculations
   const totalStudents = filteredStudents.length;
@@ -91,10 +139,8 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
   const attendanceRate = totalStudents > 0 ? Math.round((presentCount / Math.max(1, totalStudents)) * 100) : 100;
 
   const paidTuitionCount = filteredTuition.filter(t => t.status === 'Lunas').length;
-  const tuitionPaidPercent = filteredTuition.length > 0 ? Math.round((paidTuitionCount / filteredTuition.length) * 100) : 0;
   const overdueTuitionCount = filteredTuition.filter(t => t.status === 'Belum Lunas' || t.status === 'Terlambat').length;
-
-  const isParentOrStudent = currentUser.role === 'parent' || currentUser.role === 'student';
+  const tuitionPaidPercent = filteredTuition.length > 0 ? Math.round((paidTuitionCount / filteredTuition.length) * 100) : 0;
 
   const levelsList: { key: EducationLevel; label: string; bg: string; text: string; border: string }[] = [
     { key: 'KB-TK', label: 'KB & TK', bg: 'bg-amber-500/10', text: 'text-amber-400', border: 'border-amber-500/30' },
@@ -116,12 +162,10 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
     : `Selamat Datang, ${currentUser.name}! 👋`;
 
   const welcomeSub = settings.welcomeSubtitle || (
-    isParentOrStudent
-      ? 'Pantau perkembangan nilai akademik, presensi QR Code real-time, dan status tagihan SPP putra/putri Anda secara transparan.'
-      : 'Pusat kendali administrasi terpadu Yayasan untuk seluruh jenjang (KB-TK, SD, SMP, SMA) dengan sinkronisasi Cloud & enkripsi AES-256.'
+    'Pusat kendali informasi terpadu Yayasan untuk seluruh jenjang (KB-TK, SD, SMP, SMA) dengan rekap nilai, presensi QR, agenda, dan status SPP real-time.'
   );
 
-  // Dynamic Custom Card Classes set by Admin
+  // Card Styling YouTube-style Rules
   const cardBgClass = {
     slate: 'bg-slate-900',
     zinc: 'bg-zinc-900',
@@ -186,9 +230,9 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
         </div>
       )}
 
-      {/* Broadcast Alert Banner from Admin */}
-      {broadcastAlert?.active && !dismissBroadcast && (
-        <div className={`p-4 sm:p-5 rounded-2xl border ${broadcastStyles} shadow-2xl relative overflow-hidden transition-all animate-in fade-in duration-200`}>
+      {/* Broadcast Alert Banner Card for ALL Users + Admin Control */}
+      {(broadcastAlert?.active && !dismissBroadcast || isAdminOrSuper) && (
+        <div className={`p-4 sm:p-5 rounded-2xl border ${broadcastAlert?.active ? broadcastStyles : 'bg-slate-900/90 border-slate-800 text-slate-300'} shadow-2xl relative overflow-hidden transition-all animate-in fade-in duration-200`}>
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-start gap-3 min-w-0 flex-1">
               <div className="p-2 rounded-xl bg-white/10 shrink-0 mt-0.5">
@@ -197,27 +241,139 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap mb-1">
                   <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-black/30 border border-white/20 uppercase tracking-wider">
-                    {broadcastAlert.date}
+                    {broadcastAlert?.date || new Date().toISOString().split('T')[0]}
                   </span>
                   <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-500/30 text-amber-300 border border-amber-500/40">
-                    Sistem Broadcast Admin
+                    Sistem Broadcast Admin & Superadmin
                   </span>
+                  {!broadcastAlert?.active && (
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                      Status: Non-Aktif
+                    </span>
+                  )}
                 </div>
                 <h3 className="font-extrabold text-sm sm:text-base tracking-tight leading-snug break-words">
-                  {broadcastAlert.title}
+                  {broadcastAlert?.title || 'Belum Ada Alert Broadcast Aktif'}
                 </h3>
                 <p className="text-xs sm:text-sm mt-1 leading-relaxed opacity-95 break-words">
-                  {broadcastAlert.message}
+                  {broadcastAlert?.message || 'Admin dan Superadmin dapat mengirimkan notifikasi pemberitahuan berupa kartu alert di sini.'}
                 </p>
               </div>
             </div>
-            <button
-              onClick={() => setDismissBroadcast(true)}
-              className="p-1.5 rounded-xl bg-black/20 hover:bg-black/40 text-white/80 hover:text-white transition shrink-0"
-              aria-label="Tutup Notifikasi"
-            >
-              <X className="w-4 h-4" />
-            </button>
+
+            <div className="flex items-center gap-2 shrink-0">
+              {isAdminOrSuper && (
+                <button
+                  onClick={() => setShowBroadcastModal(true)}
+                  className="px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 hover:text-amber-200 text-xs font-bold border border-amber-500/40 rounded-xl flex items-center gap-1.5 shadow-md transition shrink-0"
+                  id="btn-edit-broadcast"
+                >
+                  <Edit className="w-3.5 h-3.5" />
+                  <span>{broadcastAlert?.active ? 'Edit Alert' : '+ Buat Alert Broadcast'}</span>
+                </button>
+              )}
+
+              {broadcastAlert?.active && (
+                <button
+                  onClick={() => setDismissBroadcast(true)}
+                  className="p-1.5 rounded-xl bg-black/20 hover:bg-black/40 text-white/80 hover:text-white transition shrink-0"
+                  aria-label="Tutup Notifikasi"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Broadcast Alert Admin Modal */}
+      {showBroadcastModal && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-amber-500/40 rounded-2xl p-5 sm:p-6 w-full max-w-lg shadow-2xl space-y-4 animate-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <h3 className="font-bold text-sm sm:text-base text-white flex items-center gap-2">
+                <Radio className="w-5 h-5 text-amber-400" />
+                Kirim Alert Notification Dashboard (Admin/Superadmin)
+              </h3>
+              <button
+                onClick={() => setShowBroadcastModal(false)}
+                className="text-slate-400 hover:text-white p-1 rounded-lg"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveBroadcast} className="space-y-3.5 text-xs">
+              <div>
+                <label className="block text-slate-300 font-semibold mb-1">Judul Alert Pemberitahuan</label>
+                <input
+                  type="text"
+                  value={alertTitle}
+                  onChange={e => setAlertTitle(e.target.value)}
+                  placeholder="Contoh: ⚠️ Pengumuman Libur Nasional & Penyesuaian Jam Belajar"
+                  className="w-full p-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white font-medium"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-300 font-semibold mb-1">Isi Pesan Alert Dashboard</label>
+                <textarea
+                  value={alertMessage}
+                  onChange={e => setAlertMessage(e.target.value)}
+                  placeholder="Tuliskan isi ringkasan pesan penting yang akan tampil pada kartu alert semua pengguna..."
+                  className="w-full p-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white h-24"
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">Tipe Tampilan Alert</label>
+                  <select
+                    value={alertType}
+                    onChange={e => setAlertType(e.target.value as any)}
+                    className="w-full p-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white font-medium"
+                  >
+                    <option value="warning">Peringatan (Kuning/Amber)</option>
+                    <option value="danger">Darurat / Penting (Merah)</option>
+                    <option value="info">Informasi (Biru)</option>
+                    <option value="success">Pengumuman Sukses (Hijau)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">Status Publikasi</label>
+                  <label className="flex items-center gap-2 mt-2 cursor-pointer text-slate-200 font-medium">
+                    <input
+                      type="checkbox"
+                      checked={alertActive}
+                      onChange={e => setAlertActive(e.target.checked)}
+                      className="w-4 h-4 rounded text-amber-500 bg-slate-800 border-slate-700 focus:ring-amber-500"
+                    />
+                    <span>Tampilkan di Dashboard</span>
+                  </label>
+                </div>
+              </div>
+
+              <div className="pt-3 border-t border-slate-800 flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowBroadcastModal(false)}
+                  className="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl hover:bg-slate-700 font-semibold"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 bg-amber-600 hover:bg-amber-500 text-white rounded-xl font-bold shadow-lg shadow-amber-600/30 flex items-center gap-2"
+                >
+                  <Send className="w-4 h-4" />
+                  <span>Sebarkan Alert Card</span>
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
@@ -391,6 +547,69 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
           </div>
         </div>
 
+      </div>
+
+      {/* Kalender & Agenda Sekolah Dashboard Card */}
+      <div className={`${combinedCardStyle} space-y-4`}>
+        <div className="flex items-center justify-between gap-2 flex-wrap border-b border-slate-800 pb-3">
+          <div className="min-w-0">
+            <h3 className="font-bold text-xs sm:text-sm text-white flex items-center gap-2 truncate">
+              <Calendar className="w-4 h-4 text-indigo-400 shrink-0" /> Kalender & Agenda Kegiatan Sekolah
+            </h3>
+            <p className="text-[10px] text-slate-400 truncate">
+              Jadwal akademik, ujian, rapat, dan hari libur resmi {settings.foundationName} ({activeLevel})
+            </p>
+          </div>
+          <button
+            onClick={() => onNavigate('calendar')}
+            className="text-xs text-indigo-400 hover:text-indigo-300 font-bold hover:underline flex items-center gap-1 shrink-0"
+          >
+            <span>Lihat Kalender Lengkap</span> <ArrowUpRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        {/* Agenda Events Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 text-xs">
+          {filteredEvents.length > 0 ? (
+            filteredEvents.slice(0, 3).map(ev => {
+              const categoryColor = {
+                Akademik: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
+                Ujian: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
+                Libur: 'bg-rose-500/20 text-rose-300 border-rose-500/30',
+                Rapat: 'bg-purple-500/20 text-purple-300 border-purple-500/30',
+                Kegiatan: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+              }[ev.category] || 'bg-slate-800 text-slate-300 border-slate-700';
+
+              return (
+                <div
+                  key={ev.id}
+                  className="p-3.5 bg-slate-800/60 rounded-xl border border-slate-700/60 hover:border-slate-500 transition flex flex-col justify-between gap-2.5 min-w-0"
+                >
+                  <div className="space-y-1.5 min-w-0">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded border uppercase truncate ${categoryColor}`}>
+                        {ev.category} • {ev.educationLevel}
+                      </span>
+                      <span className="text-[10px] font-semibold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20 shrink-0">
+                        {ev.startDate === ev.endDate ? ev.startDate : `${ev.startDate} s/d ${ev.endDate}`}
+                      </span>
+                    </div>
+                    <h4 className="font-bold text-white text-xs sm:text-sm leading-snug line-clamp-1">{ev.title}</h4>
+                    <p className="text-[11px] text-slate-300 line-clamp-2 leading-relaxed">{ev.description || 'Tidak ada deskripsi tambahan.'}</p>
+                  </div>
+                  <div className="text-[10px] text-slate-400 pt-1.5 border-t border-slate-700/50 flex items-center justify-between">
+                    <span>Tersinkronisasi Kalender Cloud</span>
+                    <span className="text-emerald-400 font-semibold">● Aktif</span>
+                  </div>
+                </div>
+              );
+            })
+          ) : (
+            <div className="col-span-full p-6 text-center text-slate-400 text-xs bg-slate-800/30 rounded-xl border border-slate-700/40">
+              Belum ada agenda kegiatan untuk jenjang ini.
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Media Sosial & YouTube Video Kegiatan Sekolah Section */}

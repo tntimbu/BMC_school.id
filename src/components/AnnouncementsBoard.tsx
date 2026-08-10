@@ -14,13 +14,15 @@ import { Announcement, UserProfile } from '../types';
 interface AnnouncementsBoardProps {
   announcements: Announcement[];
   currentUser: UserProfile;
-  onCreateAnnouncement: (data: Partial<Announcement>) => Promise<void>;
+  onCreateAnnouncement?: (data: Partial<Announcement>) => Promise<void>;
+  onAddAnnouncement?: (data: Partial<Announcement>) => Promise<void>;
 }
 
 export const AnnouncementsBoard: React.FC<AnnouncementsBoardProps> = ({
   announcements,
   currentUser,
-  onCreateAnnouncement
+  onCreateAnnouncement,
+  onAddAnnouncement
 }) => {
   const [showAddModal, setShowAddModal] = useState<boolean>(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('Semua');
@@ -30,7 +32,9 @@ export const AnnouncementsBoard: React.FC<AnnouncementsBoardProps> = ({
   const [category, setCategory] = useState<'Akademik' | 'Keuangan' | 'Kegiatan' | 'Darurat' | 'PPDB'>('Akademik');
   const [content, setContent] = useState<string>('');
   const [targetAudience, setTargetAudience] = useState<'Semua' | 'Siswa' | 'Guru' | 'Orang Tua'>('Semua');
+  const [educationLevel, setEducationLevel] = useState<any>('Semua');
   const [priority, setPriority] = useState<'Normal' | 'Tinggi' | 'Penting'>('Normal');
+  const [isPinned, setIsPinned] = useState<boolean>(false);
   const [submitting, setSubmitting] = useState<boolean>(false);
 
   const categories = ['Semua', 'Akademik', 'Keuangan', 'Kegiatan', 'Darurat', 'PPDB'];
@@ -41,20 +45,30 @@ export const AnnouncementsBoard: React.FC<AnnouncementsBoardProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!title.trim() || !content.trim()) {
+      alert('Mohon isi Judul dan Isi Pengumuman!');
+      return;
+    }
     setSubmitting(true);
     try {
-      await onCreateAnnouncement({
-        title,
-        category,
-        content,
-        targetAudience,
-        priority,
-        author: currentUser.name
-      });
+      const handleFn = onCreateAnnouncement || onAddAnnouncement;
+      if (handleFn) {
+        await handleFn({
+          title,
+          category,
+          content,
+          targetAudience,
+          educationLevel,
+          priority,
+          isPinned,
+          author: currentUser.name
+        });
+      }
       setShowAddModal(false);
       setTitle('');
       setContent('');
-      alert('Pengumuman sekolah berhasil diterbitkan dan dinotifikasikan!');
+      setIsPinned(false);
+      alert('Pengumuman sekolah berhasil diterbitkan!');
     } catch (err) {
       alert('Gagal menerbitkan pengumuman');
     } finally {
@@ -62,7 +76,7 @@ export const AnnouncementsBoard: React.FC<AnnouncementsBoardProps> = ({
     }
   };
 
-  const canPublish = currentUser.role === 'admin' || currentUser.role === 'teacher';
+  const canPublish = currentUser.role === 'admin' || currentUser.role === 'superadmin' || currentUser.role === 'teacher';
 
   return (
     <div className="space-y-6">
@@ -194,7 +208,7 @@ export const AnnouncementsBoard: React.FC<AnnouncementsBoardProps> = ({
                 />
               </div>
 
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 <div>
                   <label className="block text-slate-300 font-semibold mb-1">Kategori</label>
                   <select
@@ -211,7 +225,7 @@ export const AnnouncementsBoard: React.FC<AnnouncementsBoardProps> = ({
                 </div>
 
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Target</label>
+                  <label className="block text-slate-300 font-semibold mb-1">Target Peran</label>
                   <select
                     value={targetAudience}
                     onChange={e => setTargetAudience(e.target.value as any)}
@@ -221,6 +235,21 @@ export const AnnouncementsBoard: React.FC<AnnouncementsBoardProps> = ({
                     <option value="Siswa">Siswa</option>
                     <option value="Guru">Guru</option>
                     <option value="Orang Tua">Orang Tua</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">Jenjang Unit</label>
+                  <select
+                    value={educationLevel}
+                    onChange={e => setEducationLevel(e.target.value as any)}
+                    className="w-full p-2 bg-slate-800 border border-slate-700 rounded-xl text-slate-200"
+                  >
+                    <option value="Semua">Semua Unit</option>
+                    <option value="KB-TK">KB-TK</option>
+                    <option value="SD">SD</option>
+                    <option value="SMP">SMP</option>
+                    <option value="SMA">SMA</option>
                   </select>
                 </div>
 
@@ -236,6 +265,18 @@ export const AnnouncementsBoard: React.FC<AnnouncementsBoardProps> = ({
                     <option value="Penting">Penting</option>
                   </select>
                 </div>
+              </div>
+
+              <div>
+                <label className="flex items-center gap-2 text-slate-200 font-semibold cursor-pointer py-1">
+                  <input
+                    type="checkbox"
+                    checked={isPinned}
+                    onChange={e => setIsPinned(e.target.checked)}
+                    className="w-4 h-4 rounded text-amber-500 bg-slate-800 border-slate-700 focus:ring-amber-500"
+                  />
+                  <span>Sematkan / Pin Pengumuman di Baris Teratas</span>
+                </label>
               </div>
 
               <div>
