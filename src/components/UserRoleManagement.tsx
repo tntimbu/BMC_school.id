@@ -16,7 +16,15 @@ import {
   CheckCircle2,
   AlertTriangle,
   Layers,
-  School
+  School,
+  UserPlus,
+  Edit,
+  Key,
+  Eye,
+  EyeOff,
+  Save,
+  RefreshCw,
+  Mail
 } from 'lucide-react';
 import { UserProfile, UserRole, SchoolSettings, EducationLevel } from '../types';
 
@@ -27,6 +35,8 @@ interface UserRoleManagementProps {
   onSelectUser?: (user: UserProfile) => void;
   onToggleBlockUser?: (userId: string, newStatus: 'Aktif' | 'Nonaktif' | 'Diblokir') => void;
   onToggleBlockUnit?: (target: EducationLevel | 'Yayasan', newStatus: 'Aktif' | 'Nonaktif' | 'Diblokir') => void;
+  onAddUser?: (newUser: UserProfile) => void;
+  onUpdateUser?: (updatedUser: UserProfile) => void;
 }
 
 interface RolePermissionRule {
@@ -44,12 +54,129 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
   settings,
   onSelectUser,
   onToggleBlockUser,
-  onToggleBlockUnit
+  onToggleBlockUnit,
+  onAddUser,
+  onUpdateUser
 }) => {
   const isSuperadmin = currentUser?.role === 'superadmin';
+  const isAdminOrSuper = currentUser?.role === 'superadmin' || currentUser?.role === 'admin';
 
   // Filter users: if not superadmin, hide superadmin profile completely!
   const visibleUsers = users.filter(u => isSuperadmin || u.role !== 'superadmin');
+
+  // Modal State
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [editingUser, setEditingUser] = useState<UserProfile | null>(null);
+  const [showPasswords, setShowPasswords] = useState<Record<string, boolean>>({});
+
+  // Form State for Add/Edit
+  const [formData, setFormData] = useState<{
+    id?: string;
+    name: string;
+    email: string;
+    username: string;
+    password: string;
+    role: UserRole;
+    educationLevel?: EducationLevel;
+    className?: string;
+    status: 'Aktif' | 'Nonaktif' | 'Diblokir';
+    avatarUrl: string;
+  }>({
+    name: '',
+    email: '',
+    username: '',
+    password: '',
+    role: 'teacher',
+    educationLevel: 'SMA',
+    className: 'XII IPA 1',
+    status: 'Aktif',
+    avatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200'
+  });
+
+  const toggleShowPassword = (userId: string) => {
+    setShowPasswords(prev => ({ ...prev, [userId]: !prev[userId] }));
+  };
+
+  const openAddModal = () => {
+    setFormData({
+      name: '',
+      email: '',
+      username: '',
+      password: '',
+      role: 'teacher',
+      educationLevel: 'SMA',
+      className: 'XII IPA 1',
+      status: 'Aktif',
+      avatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200'
+    });
+    setShowAddModal(true);
+  };
+
+  const openEditModal = (u: UserProfile) => {
+    setEditingUser(u);
+    setFormData({
+      id: u.id,
+      name: u.name,
+      email: u.email,
+      username: u.username || '',
+      password: u.password || '',
+      role: u.role,
+      educationLevel: u.educationLevel || 'SMA',
+      className: u.className || 'XII IPA 1',
+      status: u.status || 'Aktif',
+      avatarUrl: u.avatarUrl
+    });
+  };
+
+  const handleSaveUserForm = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.name.trim() || !formData.username.trim() || !formData.password.trim()) {
+      alert('Mohon isi Nama, Username, dan Password!');
+      return;
+    }
+
+    if (editingUser) {
+      // Update existing user
+      const updated: UserProfile = {
+        ...editingUser,
+        name: formData.name,
+        email: formData.email,
+        username: formData.username,
+        password: formData.password,
+        role: formData.role,
+        educationLevel: formData.educationLevel,
+        className: formData.className,
+        status: formData.status,
+        avatarUrl: formData.avatarUrl
+      };
+      if (onUpdateUser) onUpdateUser(updated);
+      setEditingUser(null);
+    } else {
+      // Add new user
+      const newUser: UserProfile = {
+        id: `usr-${Date.now()}`,
+        name: formData.name,
+        email: formData.email || `${formData.username}@yayasan-nusantara.sch.id`,
+        username: formData.username,
+        password: formData.password,
+        role: formData.role,
+        educationLevel: formData.educationLevel,
+        className: formData.className,
+        status: formData.status,
+        avatarUrl: formData.avatarUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200'
+      };
+      if (onAddUser) onAddUser(newUser);
+      setShowAddModal(false);
+    }
+  };
+
+  const handleResetPassword = (u: UserProfile) => {
+    const newPass = `pass${Math.floor(1000 + Math.random() * 9000)}`;
+    if (confirm(`Reset password untuk ${u.name}? Password baru: ${newPass}`)) {
+      const updated: UserProfile = { ...u, password: newPass };
+      if (onUpdateUser) onUpdateUser(updated);
+    }
+  };
 
   const [permissions, setPermissions] = useState<RolePermissionRule[]>([
     {
@@ -161,19 +288,24 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
         <div>
           <h2 className="text-xl font-bold text-white flex items-center gap-2">
             <ShieldAlert className="w-6 h-6 text-indigo-400" />
-            Manajemen Peran & Akses Pemblokiran (Role-Based Access Control)
+            Manajemen Pengguna, Peran & Hak Akses (Role-Based Access Control)
           </h2>
           <p className="text-xs text-slate-400 mt-1">
             {isSuperadmin
-              ? 'Akses Penuh Superadmin: Anda dapat melihat seluruh akun, mengubah matriks izin, serta memblokir/menonaktifkan akun atau unit sekolah.'
-              : 'Tampilan Peran Operasional Admin: Superadmin terlindungi & tidak terekspos dalam daftar akun.'}
+              ? 'Akses Penuh Superadmin: Buat & kelola akun, username, password, matriks izin, serta blokir unit sekolah.'
+              : isAdminOrSuper
+              ? 'Akses Hak Penuh Admin: Anda memiliki wewenang penuh untuk membuat, menambah, dan mengubah username & password seluruh pengguna.'
+              : 'Tampilan Peran Operasional Admin'}
           </p>
         </div>
 
-        {isSuperadmin && (
-          <div className="flex items-center gap-2 bg-amber-500/10 border border-amber-500/30 text-amber-300 px-3 py-1.5 rounded-xl text-xs font-semibold shrink-0">
-            <Crown className="w-4 h-4 text-amber-400" /> Mode Superadmin Aktif
-          </div>
+        {isAdminOrSuper && (
+          <button
+            onClick={openAddModal}
+            className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-lg shadow-blue-500/25 transition shrink-0"
+          >
+            <UserPlus className="w-4 h-4" /> Tambah Pengguna Baru
+          </button>
         )}
       </div>
 
@@ -283,57 +415,60 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
         </div>
       )}
 
-      {/* Users Selector Grid */}
+      {/* Users Selector & Credentials Management Grid */}
       <div className="p-5 bg-slate-900 rounded-2xl border border-slate-800 space-y-4">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
             <h3 className="text-sm font-bold text-white flex items-center gap-2">
-              <UserCheck className="w-4 h-4 text-blue-400" /> Daftar Akun Pengguna Terdaftar ({visibleUsers.length} Akun)
+              <UserCheck className="w-4 h-4 text-blue-400" /> Kelola Username, Password & Akun Terdaftar ({visibleUsers.length} Akun)
             </h3>
-            {!isSuperadmin && (
-              <p className="text-[11px] text-amber-400 mt-0.5">
-                * Profil Superadmin disembunyikan secara otomatis demi keamanan sistem.
-              </p>
-            )}
+            <p className="text-[11px] text-slate-400 mt-0.5">
+              Admin & Superadmin memiliki hak penuh membuat, mengubah username, dan mereset password pengguna.
+            </p>
           </div>
-          <span className="text-[11px] text-slate-400">Klik kartu untuk beralih simulasi login</span>
+          {isAdminOrSuper && (
+            <button
+              onClick={openAddModal}
+              className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-xl text-xs font-bold transition self-start sm:self-auto"
+            >
+              <UserPlus className="w-3.5 h-3.5" /> + Tambah Pengguna
+            </button>
+          )}
         </div>
 
-        <div className={`grid grid-cols-1 sm:grid-cols-2 ${isSuperadmin ? 'lg:grid-cols-5' : 'lg:grid-cols-4'} gap-3`}>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {visibleUsers.map(u => {
             const rBadge = roleBadges[u.role] || { label: u.role, icon: User, style: 'bg-slate-800 text-slate-300' };
             const Icon = rBadge.icon;
             const isSelected = currentUser?.id === u.id;
             const userStatus = u.status || 'Aktif';
             const isUserBlocked = userStatus === 'Diblokir' || userStatus === 'Nonaktif';
+            const showPass = !!showPasswords[u.id];
 
             return (
               <div
                 key={u.id}
-                className={`p-3.5 rounded-xl border transition flex flex-col justify-between space-y-3 ${
+                className={`p-4 rounded-2xl border transition flex flex-col justify-between space-y-3 ${
                   isSelected
-                    ? 'bg-blue-600/20 border-blue-500 shadow-lg shadow-blue-500/20 ring-1 ring-blue-500'
-                    : 'bg-slate-800/60 border-slate-700/60 hover:bg-slate-800'
+                    ? 'bg-blue-600/15 border-blue-500/80 shadow-lg shadow-blue-500/10 ring-1 ring-blue-500/50'
+                    : 'bg-slate-800/60 border-slate-700/60 hover:bg-slate-800/90'
                 }`}
               >
-                <div onClick={() => onSelectUser && onSelectUser(u)} className="cursor-pointer space-y-2">
-                  <div className="flex items-center gap-2.5">
-                    <img src={u.avatarUrl} alt={u.name} className="w-9 h-9 rounded-full object-cover ring-2 ring-blue-500 shrink-0" />
-                    <div className="min-w-0 flex-1">
-                      <div className="font-bold text-white text-xs truncate flex items-center justify-between gap-1">
-                        <span className="truncate">{u.name}</span>
+                <div className="space-y-2.5">
+                  <div className="flex items-start justify-between gap-2">
+                    <div
+                      onClick={() => onSelectUser && onSelectUser(u)}
+                      className="flex items-center gap-2.5 cursor-pointer min-w-0 flex-1"
+                      title="Klik untuk beralih simulasi login"
+                    >
+                      <img src={u.avatarUrl} alt={u.name} className="w-10 h-10 rounded-full object-cover ring-2 ring-blue-500/50 shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <div className="font-bold text-white text-xs truncate">{u.name}</div>
+                        <div className="text-[10px] text-slate-400 truncate">{u.email}</div>
                       </div>
-                      <div className="text-[10px] text-slate-400 truncate">{u.email}</div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between gap-1">
-                    <div className={`text-[9px] font-bold px-2 py-0.5 rounded-lg border flex items-center gap-1 justify-center ${rBadge.style}`}>
-                      <Icon className="w-3 h-3 shrink-0" />
-                      <span className="truncate">{rBadge.label}</span>
                     </div>
 
-                    <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${
+                    <span className={`text-[9px] font-bold px-2 py-0.5 rounded shrink-0 ${
                       isUserBlocked
                         ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
                         : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
@@ -341,24 +476,81 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
                       {userStatus}
                     </span>
                   </div>
+
+                  <div className="flex items-center justify-between gap-1">
+                    <div className={`text-[9px] font-bold px-2 py-0.5 rounded-lg border flex items-center gap-1 ${rBadge.style}`}>
+                      <Icon className="w-3 h-3 shrink-0" />
+                      <span className="truncate">{rBadge.label}</span>
+                    </div>
+
+                    {u.educationLevel && (
+                      <span className="text-[9px] font-semibold bg-slate-800 text-slate-300 px-2 py-0.5 rounded border border-slate-700">
+                        Unit {u.educationLevel}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* USERNAME & PASSWORD BOX FOR ADMIN / SUPERADMIN */}
+                  {isAdminOrSuper && (
+                    <div className="p-2.5 bg-slate-900/90 rounded-xl border border-slate-700/80 space-y-1.5 text-xs">
+                      <div className="flex items-center justify-between text-[11px]">
+                        <span className="text-slate-400 flex items-center gap-1 font-semibold">
+                          <User className="w-3 h-3 text-amber-400" /> Username:
+                        </span>
+                        <span className="font-bold text-amber-300 font-mono">{u.username || '-'}</span>
+                      </div>
+
+                      <div className="flex items-center justify-between text-[11px]">
+                        <span className="text-slate-400 flex items-center gap-1 font-semibold">
+                          <Lock className="w-3 h-3 text-emerald-400" /> Password:
+                        </span>
+                        <div className="flex items-center gap-1.5 font-mono">
+                          <span className="font-bold text-emerald-300">
+                            {showPass ? (u.password || '******') : '••••••••'}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => toggleShowPassword(u.id)}
+                            className="p-0.5 text-slate-400 hover:text-slate-200"
+                            title="Tampilkan / Sembunyikan Password"
+                          >
+                            {showPass ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
-                {/* Superadmin Quick Block Button for Account */}
-                {isSuperadmin && u.role !== 'superadmin' && (
-                  <div className="pt-2 border-t border-slate-700/60 flex items-center justify-between gap-2">
-                    {isUserBlocked ? (
+                {/* ADMIN & SUPERADMIN ACTION BUTTONS */}
+                {isAdminOrSuper && (
+                  <div className="pt-2 border-t border-slate-700/60 flex items-center gap-2">
+                    <button
+                      onClick={() => openEditModal(u)}
+                      className="flex-1 py-1.5 px-2 bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 border border-blue-500/30 rounded-lg text-[10px] font-bold flex items-center justify-center gap-1 transition"
+                    >
+                      <Edit className="w-3 h-3" /> Edit Credential
+                    </button>
+
+                    <button
+                      onClick={() => handleResetPassword(u)}
+                      className="py-1.5 px-2 bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-500/30 rounded-lg text-[10px] font-bold flex items-center justify-center gap-1 transition"
+                      title="Reset Password Pengguna"
+                    >
+                      <RefreshCw className="w-3 h-3" /> Reset
+                    </button>
+
+                    {isSuperadmin && u.role !== 'superadmin' && (
                       <button
-                        onClick={() => onToggleBlockUser && onToggleBlockUser(u.id, 'Aktif')}
-                        className="w-full py-1 px-2 bg-emerald-600/80 hover:bg-emerald-600 text-white rounded text-[10px] font-bold flex items-center justify-center gap-1 transition"
+                        onClick={() => onToggleBlockUser && onToggleBlockUser(u.id, isUserBlocked ? 'Aktif' : 'Diblokir')}
+                        className={`p-1.5 rounded-lg text-[10px] font-bold flex items-center justify-center transition ${
+                          isUserBlocked
+                            ? 'bg-emerald-600/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-600/30'
+                            : 'bg-rose-600/20 text-rose-300 border border-rose-500/30 hover:bg-rose-600/30'
+                        }`}
+                        title={isUserBlocked ? 'Aktifkan Akun' : 'Blokir Akun'}
                       >
-                        <CheckCircle2 className="w-3 h-3" /> Aktifkan Akun
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => onToggleBlockUser && onToggleBlockUser(u.id, 'Diblokir')}
-                        className="w-full py-1 px-2 bg-rose-600/80 hover:bg-rose-600 text-white rounded text-[10px] font-bold flex items-center justify-center gap-1 transition"
-                      >
-                        <Ban className="w-3 h-3" /> Blokir Akun Ini
+                        <Ban className="w-3.5 h-3.5" />
                       </button>
                     )}
                   </div>
@@ -395,7 +587,7 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
                 <tr key={rule.module} className="hover:bg-slate-800/40 transition">
                   <td className="p-3.5 font-bold text-white">{rule.module}</td>
                   
-                  {/* Superadmin Column - Only visible when logged in as Superadmin */}
+                  {/* Superadmin Column */}
                   {isSuperadmin && (
                     <td className="p-3.5 text-center">
                       <span className="px-2 py-1 bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded font-bold text-[10px] inline-flex items-center gap-1">
@@ -476,6 +668,180 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
           </table>
         </div>
       </div>
+
+      {/* MODAL FOR ADD / EDIT USER BY ADMIN & SUPERADMIN */}
+      {(showAddModal || editingUser) && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-full max-w-lg bg-slate-900 border border-slate-700 rounded-3xl shadow-2xl overflow-hidden text-slate-100 flex flex-col max-h-[90vh]">
+            
+            <div className="p-5 bg-slate-800/80 border-b border-slate-700 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-2xl bg-blue-600/20 text-blue-400 border border-blue-500/30">
+                  <UserPlus className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-base text-white">
+                    {editingUser ? 'Edit Credential & Akun Pengguna' : 'Tambah Akun Pengguna Baru'}
+                  </h3>
+                  <p className="text-xs text-slate-400">
+                    Otoritas Penuh Admin & Superadmin dalam mengelola Username & Password
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setShowAddModal(false);
+                  setEditingUser(null);
+                }}
+                className="p-1.5 rounded-xl bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 transition"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveUserForm} className="p-5 space-y-4 overflow-y-auto flex-1">
+              
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1">Nama Lengkap Pengguna</label>
+                <input
+                  type="text"
+                  value={formData.name}
+                  onChange={e => setFormData({ ...formData, name: e.target.value })}
+                  className="w-full p-2.5 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white font-semibold focus:border-blue-500 focus:outline-none"
+                  placeholder="Contoh: Dra. Tri Astuti, M.Pd."
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-amber-400 mb-1">Username Login</label>
+                  <input
+                    type="text"
+                    value={formData.username}
+                    onChange={e => setFormData({ ...formData, username: e.target.value })}
+                    className="w-full p-2.5 bg-slate-800 border border-amber-500/50 rounded-xl text-xs text-amber-300 font-mono font-bold focus:border-amber-400 focus:outline-none"
+                    placeholder="username..."
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-emerald-400 mb-1">Password Login</label>
+                  <input
+                    type="text"
+                    value={formData.password}
+                    onChange={e => setFormData({ ...formData, password: e.target.value })}
+                    className="w-full p-2.5 bg-slate-800 border border-emerald-500/50 rounded-xl text-xs text-emerald-300 font-mono font-bold focus:border-emerald-400 focus:outline-none"
+                    placeholder="password..."
+                    required
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1">Alamat Email</label>
+                <input
+                  type="email"
+                  value={formData.email}
+                  onChange={e => setFormData({ ...formData, email: e.target.value })}
+                  className="w-full p-2.5 bg-slate-800 border border-slate-700 rounded-xl text-xs text-slate-200 focus:border-blue-500 focus:outline-none"
+                  placeholder="email@domain.sch.id"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 mb-1">Peran / Hak Akses (Role)</label>
+                  <select
+                    value={formData.role}
+                    onChange={e => setFormData({ ...formData, role: e.target.value as UserRole })}
+                    className="w-full p-2.5 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white font-semibold focus:border-blue-500 focus:outline-none"
+                  >
+                    <option value="admin">Admin Operasional</option>
+                    <option value="teacher">Guru / Pendidik</option>
+                    <option value="student">Siswa / Murid</option>
+                    <option value="parent">Orang Tua / Wali</option>
+                    {isSuperadmin && <option value="superadmin">Superadmin Yayasan</option>}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 mb-1">Jenjang Pendidikan</label>
+                  <select
+                    value={formData.educationLevel}
+                    onChange={e => setFormData({ ...formData, educationLevel: e.target.value as EducationLevel })}
+                    className="w-full p-2.5 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white font-semibold focus:border-blue-500 focus:outline-none"
+                  >
+                    <option value="KB-TK">KB-TK</option>
+                    <option value="SD">SD</option>
+                    <option value="SMP">SMP</option>
+                    <option value="SMA">SMA</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 mb-1">Status Akun</label>
+                  <select
+                    value={formData.status}
+                    onChange={e => setFormData({ ...formData, status: e.target.value as any })}
+                    className="w-full p-2.5 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white font-semibold focus:border-blue-500 focus:outline-none"
+                  >
+                    <option value="Aktif">Aktif</option>
+                    <option value="Nonaktif">Nonaktif</option>
+                    <option value="Diblokir">Diblokir</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 mb-1">Kelas / Ruang (Opsional)</label>
+                  <input
+                    type="text"
+                    value={formData.className}
+                    onChange={e => setFormData({ ...formData, className: e.target.value })}
+                    className="w-full p-2.5 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white focus:border-blue-500 focus:outline-none"
+                    placeholder="Contoh: XII IPA 1"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1">URL Foto Profil / Avatar</label>
+                <input
+                  type="url"
+                  value={formData.avatarUrl}
+                  onChange={e => setFormData({ ...formData, avatarUrl: e.target.value })}
+                  className="w-full p-2.5 bg-slate-800 border border-slate-700 rounded-xl text-xs text-slate-300 focus:border-blue-500 focus:outline-none"
+                  placeholder="https://images.unsplash.com/..."
+                />
+              </div>
+
+              <div className="pt-3 flex items-center justify-end gap-2 border-t border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowAddModal(false);
+                    setEditingUser(null);
+                  }}
+                  className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold transition"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-blue-600/30 flex items-center gap-1.5 transition"
+                >
+                  <Save className="w-4 h-4" /> Simpan Akun Pengguna
+                </button>
+              </div>
+
+            </form>
+
+          </div>
+        </div>
+      )}
 
     </div>
   );

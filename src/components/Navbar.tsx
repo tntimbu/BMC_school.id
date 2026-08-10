@@ -26,6 +26,7 @@ interface NavbarProps {
   users?: UserProfile[];
   onSelectUser?: (user: UserProfile) => void;
   onLogout: () => void;
+  onOpenProfileModal?: () => void;
   activeLevel: EducationLevel | 'Semua';
   onSelectLevel: (level: EducationLevel | 'Semua') => void;
   darkMode: boolean;
@@ -40,6 +41,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   settings,
   currentUser,
   onLogout,
+  onOpenProfileModal,
   activeLevel,
   onSelectLevel,
   darkMode,
@@ -296,7 +298,20 @@ export const Navbar: React.FC<NavbarProps> = ({
                     </div>
                   </div>
 
-                  <div className="pt-2">
+                  <div className="pt-2 space-y-1">
+                    <button
+                      onClick={() => {
+                        setShowProfileMenu(false);
+                        if (onOpenProfileModal) onOpenProfileModal();
+                      }}
+                      className="w-full flex items-center justify-between px-3 py-2 rounded-xl bg-blue-600/10 hover:bg-blue-600/20 text-blue-300 font-bold text-xs transition border border-blue-500/20"
+                    >
+                      <div className="flex items-center gap-2">
+                        <UserCheck className="w-4 h-4 text-blue-400" />
+                        <span>Edit Profil & Password Saya</span>
+                      </div>
+                    </button>
+
                     <button
                       onClick={() => {
                         setShowProfileMenu(false);

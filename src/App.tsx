@@ -53,6 +53,7 @@ import { SchoolSettingsView } from './components/SchoolSettingsView';
 import { BottomNavigation } from './components/BottomNavigation';
 import { AppFreezeOverlay } from './components/AppFreezeOverlay';
 import { LoginPage } from './components/LoginPage';
+import { UserProfileModal } from './components/UserProfileModal';
 import { ShieldCheck, Activity, Lock, Cloud, Cpu, Crown, ShieldAlert } from 'lucide-react';
 
 export default function App() {
@@ -85,8 +86,43 @@ export default function App() {
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
-  const [users, setUsers] = useState<UserProfile[]>(initialUsers);
-  const [currentUser, setCurrentUser] = useState<UserProfile | null>(initialUsers[0]);
+  const [users, setUsers] = useState<UserProfile[]>(() => {
+    const saved = localStorage.getItem('siakad_users');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (err) {}
+    }
+    return initialUsers;
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('siakad_users', JSON.stringify(users));
+    } catch (err) {}
+  }, [users]);
+
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(() => {
+    return users[0] || initialUsers[0];
+  });
+
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState<boolean>(false);
+
+  const handleSaveProfile = (updatedUser: UserProfile) => {
+    setCurrentUser(updatedUser);
+    setUsers(prev => prev.map(u => u.id === updatedUser.id ? updatedUser : u));
+  };
+
+  const handleAddUser = (newUser: UserProfile) => {
+    setUsers(prev => [newUser, ...prev]);
+  };
+
+  const handleUpdateUser = (updatedUser: UserProfile) => {
+    setUsers(prev => prev.map(u => u.id === updatedUser.id ? updatedUser : u));
+    if (currentUser?.id === updatedUser.id) {
+      setCurrentUser(updatedUser);
+    }
+  };
   const [students, setStudents] = useState<Student[]>(initialStudents);
   const [grades, setGrades] = useState<Grade[]>(initialGrades);
   const [attendance, setAttendance] = useState<AttendanceRecord[]>(initialAttendance);
@@ -482,6 +518,7 @@ export default function App() {
         currentUser={currentUser}
         users={users}
         onLogout={() => setCurrentUser(null)}
+        onOpenProfileModal={() => setIsProfileModalOpen(true)}
         activeLevel={activeLevel}
         onSelectLevel={lvl => setActiveLevel(lvl)}
         darkMode={darkMode}
@@ -665,6 +702,8 @@ export default function App() {
               onSelectUser={u => setCurrentUser(u)}
               onToggleBlockUser={handleToggleBlockUser}
               onToggleBlockUnit={handleToggleBlockUnit}
+              onAddUser={handleAddUser}
+              onUpdateUser={handleUpdateUser}
             />
           )}
 
@@ -692,31 +731,33 @@ export default function App() {
         </main>
       </div>
 
-      {/* High-Density Compact Bottom Status Bar Footer */}
-      <footer className="bg-[#1E293B] border-t border-slate-800 py-2.5 px-4 text-[11px] text-slate-400">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
-          <div className="flex items-center gap-3">
-            <span className="flex items-center gap-1.5 font-semibold text-emerald-400">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              SIAKAD Yayasan v4.5 PRO (Encrypted)
-            </span>
-            <span className="text-slate-600 hidden sm:inline">•</span>
-            <span className="hidden sm:inline-flex items-center gap-1 text-slate-400">
-              <Lock className="w-3 h-3 text-blue-400" /> AES-256 Multi-Level Security
-            </span>
-          </div>
+      {/* High-Density Compact Bottom Status Bar Footer - Visible only to Admin & Superadmin */}
+      {(currentUser?.role === 'admin' || currentUser?.role === 'superadmin') && (
+        <footer className="bg-[#1E293B] border-t border-slate-800 py-2.5 px-4 text-[11px] text-slate-400">
+          <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
+            <div className="flex items-center gap-3">
+              <span className="flex items-center gap-1.5 font-semibold text-emerald-400">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                SIAKAD Yayasan v4.5 PRO (Encrypted)
+              </span>
+              <span className="text-slate-600 hidden sm:inline">•</span>
+              <span className="hidden sm:inline-flex items-center gap-1 text-slate-400">
+                <Lock className="w-3 h-3 text-blue-400" /> AES-256 Multi-Level Security
+              </span>
+            </div>
 
-          <div className="flex items-center gap-4 text-[10px] text-slate-400">
-            <span className="flex items-center gap-1">
-              <Cpu className="w-3 h-3 text-indigo-400" /> Latensi: 12ms
-            </span>
-            <span className="flex items-center gap-1">
-              <Cloud className="w-3 h-3 text-cyan-400" /> Sync Cloud: Real-time
-            </span>
-            <span>© 2026 {settings.foundationName}</span>
+            <div className="flex items-center gap-4 text-[10px] text-slate-400">
+              <span className="flex items-center gap-1">
+                <Cpu className="w-3 h-3 text-indigo-400" /> Latensi: 12ms
+              </span>
+              <span className="flex items-center gap-1">
+                <Cloud className="w-3 h-3 text-cyan-400" /> Sync Cloud: Real-time
+              </span>
+              <span>© 2026 {settings.foundationName}</span>
+            </div>
           </div>
-        </div>
-      </footer>
+        </footer>
+      )}
 
       {/* Mobile Bottom Floating Quick Navigation Bar */}
       <BottomNavigation
@@ -728,6 +769,16 @@ export default function App() {
         currentUser={currentUser}
         onOpenMobileMenu={() => setMobileOpen(true)}
       />
+
+      {/* User Self-Service Profile Modal */}
+      {currentUser && (
+        <UserProfileModal
+          currentUser={currentUser}
+          isOpen={isProfileModalOpen}
+          onClose={() => setIsProfileModalOpen(false)}
+          onSaveProfile={handleSaveProfile}
+        />
+      )}
 
     </div>
   );
