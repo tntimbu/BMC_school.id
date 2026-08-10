@@ -173,8 +173,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ users, onLogin, onRegister
         }}
       />
 
-      {/* Top Header Branding */}
-      <header className="relative z-10 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 flex items-center justify-between">
+      {/* Top Header Branding - Hidden on mobile */}
+      <header className="hidden lg:flex relative z-10 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-500 p-0.5 shadow-lg shadow-blue-500/20 flex items-center justify-center">
             <div className="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center">
@@ -201,8 +201,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ users, onLogin, onRegister
       {/* Main Container */}
       <main className="relative z-10 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 grid lg:grid-cols-12 gap-8 items-center flex-1">
         
-        {/* Left Side: Branding / Intro Card */}
-        <div className="lg:col-span-6 space-y-6">
+        {/* Left Side: Branding / Intro Card - Hidden on mobile screens */}
+        <div className="hidden lg:block lg:col-span-6 space-y-6">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-semibold">
             <Sparkles className="w-3.5 h-3.5" />
             <span>Portal Otentikasi Resmi SIAKAD</span>
@@ -247,7 +247,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ users, onLogin, onRegister
         </div>
 
         {/* Right Side: Login / Register Form Card */}
-        <div className="lg:col-span-6">
+        <div className="lg:col-span-6 w-full max-w-md mx-auto lg:max-w-none">
           <div className="bg-slate-900/90 backdrop-blur-xl border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl shadow-blue-950/50 relative overflow-hidden">
             
             {/* Top Tabs */}
