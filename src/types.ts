@@ -341,6 +341,27 @@ export interface SchoolSettings {
   showLevelOverview?: boolean;
   showRealtimeLogs?: boolean;
   compactDashboardMode?: boolean;
+  // Card Customization by Admin
+  cardBgColor?: 'slate' | 'zinc' | 'indigo' | 'emerald' | 'amber' | 'dark';
+  cardBorderColor?: 'slate' | 'blue' | 'amber' | 'emerald' | 'purple' | 'none';
+  cardPadding?: 'compact' | 'normal' | 'spacious';
+  cardRadius?: 'rounded-lg' | 'rounded-xl' | 'rounded-2xl' | 'rounded-3xl';
+  // Social Media & YouTube Activity
+  youtubeVideoUrl?: string;
+  youtubeVideoTitle?: string;
+  socialInstagram?: string;
+  socialFacebook?: string;
+  socialTiktok?: string;
+  socialWebsite?: string;
+  // Broadcast Warning/Notice from Admin
+  broadcastNotification?: {
+    active: boolean;
+    title: string;
+    message: string;
+    type: 'info' | 'warning' | 'danger' | 'success';
+    date: string;
+    id: string;
+  };
   // Custom Subjects (Mata Pelajaran)
   subjects?: SubjectConfig[];
   // License & Account Expiration Management

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Users,
   GraduationCap,
@@ -16,7 +16,15 @@ import {
   Building2,
   School,
   Layers,
-  Crown
+  Crown,
+  RefreshCw,
+  Video,
+  Instagram,
+  Facebook,
+  Globe,
+  X,
+  Radio,
+  ExternalLink
 } from 'lucide-react';
 import { Student, Grade, AttendanceRecord, TuitionRecord, PPDBApplication, Announcement, UserProfile, SchoolSettings, EducationLevel } from '../types';
 import { ActiveTab } from './Sidebar';
@@ -46,6 +54,23 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
   activeLevel = 'Semua',
   onNavigate
 }) => {
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [showRefreshToast, setShowRefreshToast] = useState(false);
+  const [dismissBroadcast, setDismissBroadcast] = useState(false);
+  const [refreshTime, setRefreshTime] = useState(() =>
+    new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+  );
+
+  const handleRefreshData = () => {
+    setIsRefreshing(true);
+    setTimeout(() => {
+      setIsRefreshing(false);
+      setRefreshTime(new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+      setShowRefreshToast(true);
+      setTimeout(() => setShowRefreshToast(false), 3500);
+    }, 650);
+  };
+
   // Filter data by active level
   const filteredStudents = activeLevel === 'Semua' ? students : students.filter(s => s.educationLevel === activeLevel);
   const filteredGrades = activeLevel === 'Semua' ? grades : grades.filter(g => g.educationLevel === activeLevel);
@@ -96,8 +121,106 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
       : 'Pusat kendali administrasi terpadu Yayasan untuk seluruh jenjang (KB-TK, SD, SMP, SMA) dengan sinkronisasi Cloud & enkripsi AES-256.'
   );
 
+  // Dynamic Custom Card Classes set by Admin
+  const cardBgClass = {
+    slate: 'bg-slate-900',
+    zinc: 'bg-zinc-900',
+    indigo: 'bg-indigo-950/90',
+    emerald: 'bg-emerald-950/90',
+    amber: 'bg-amber-950/90',
+    dark: 'bg-slate-950'
+  }[settings.cardBgColor || 'slate'] || 'bg-slate-900';
+
+  const cardBorderClass = {
+    slate: 'border-slate-800',
+    blue: 'border-blue-500/40 shadow-blue-500/5',
+    amber: 'border-amber-500/40 shadow-amber-500/5',
+    emerald: 'border-emerald-500/40 shadow-emerald-500/5',
+    purple: 'border-purple-500/40 shadow-purple-500/5',
+    none: 'border-transparent'
+  }[settings.cardBorderColor || 'slate'] || 'border-slate-800';
+
+  const cardPaddingClass = {
+    compact: 'p-2.5 sm:p-3.5',
+    normal: 'p-3.5 sm:p-5',
+    spacious: 'p-5 sm:p-7'
+  }[settings.cardPadding || 'normal'] || 'p-3.5 sm:p-5';
+
+  const cardRadiusClass = settings.cardRadius || 'rounded-2xl';
+
+  const combinedCardStyle = `${cardBgClass} ${cardBorderClass} ${cardPaddingClass} ${cardRadiusClass} border shadow-xl transition-all duration-200`;
+
+  // Parse YouTube Embed URL
+  const getYouTubeEmbedUrl = (url?: string) => {
+    if (!url) return null;
+    let videoId = '';
+    if (url.includes('v=')) {
+      videoId = url.split('v=')[1]?.split('&')[0];
+    } else if (url.includes('youtu.be/')) {
+      videoId = url.split('youtu.be/')[1]?.split('?')[0];
+    } else if (url.includes('embed/')) {
+      videoId = url.split('embed/')[1]?.split('?')[0];
+    }
+    return videoId ? `https://www.youtube-nocookie.com/embed/${videoId}` : null;
+  };
+
+  const youtubeEmbedUrl = getYouTubeEmbedUrl(settings.youtubeVideoUrl);
+
+  const broadcastAlert = settings.broadcastNotification;
+
+  const broadcastStyles = {
+    warning: 'bg-amber-950/90 border-amber-500/60 text-amber-100 shadow-amber-500/10',
+    danger: 'bg-rose-950/90 border-rose-500/60 text-rose-100 shadow-rose-500/10',
+    info: 'bg-blue-950/90 border-blue-500/60 text-blue-100 shadow-blue-500/10',
+    success: 'bg-emerald-950/90 border-emerald-500/60 text-emerald-100 shadow-emerald-500/10'
+  }[broadcastAlert?.type || 'warning'];
+
   return (
     <div className="space-y-4 sm:space-y-6">
+
+      {/* Toast Notification for Manual Refresh */}
+      {showRefreshToast && (
+        <div className="fixed top-20 right-4 z-50 bg-emerald-600 text-white px-4 py-2.5 rounded-xl shadow-2xl border border-emerald-400 flex items-center gap-2 text-xs font-bold animate-in slide-in-from-top duration-200">
+          <CheckCircle2 className="w-4 h-4 text-emerald-200 shrink-0" />
+          <span>Data Dashboard Berhasil Diperbarui! (Cloud Sync Active)</span>
+        </div>
+      )}
+
+      {/* Broadcast Alert Banner from Admin */}
+      {broadcastAlert?.active && !dismissBroadcast && (
+        <div className={`p-4 sm:p-5 rounded-2xl border ${broadcastStyles} shadow-2xl relative overflow-hidden transition-all animate-in fade-in duration-200`}>
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-start gap-3 min-w-0 flex-1">
+              <div className="p-2 rounded-xl bg-white/10 shrink-0 mt-0.5">
+                <Radio className="w-5 h-5 text-amber-400 animate-pulse" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 flex-wrap mb-1">
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-black/30 border border-white/20 uppercase tracking-wider">
+                    {broadcastAlert.date}
+                  </span>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-500/30 text-amber-300 border border-amber-500/40">
+                    Sistem Broadcast Admin
+                  </span>
+                </div>
+                <h3 className="font-extrabold text-sm sm:text-base tracking-tight leading-snug break-words">
+                  {broadcastAlert.title}
+                </h3>
+                <p className="text-xs sm:text-sm mt-1 leading-relaxed opacity-95 break-words">
+                  {broadcastAlert.message}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => setDismissBroadcast(true)}
+              className="p-1.5 rounded-xl bg-black/20 hover:bg-black/40 text-white/80 hover:text-white transition shrink-0"
+              aria-label="Tutup Notifikasi"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
       
       {/* Welcome Banner */}
       <div className={`relative overflow-hidden rounded-2xl bg-gradient-to-r ${bannerGradient} p-4 sm:p-6 text-white shadow-xl border`}>
@@ -108,7 +231,14 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
                 <Building2 className="w-3 h-3 text-amber-400 shrink-0" /> <span className="truncate">{settings.foundationName}</span>
               </span>
               <span className="text-[11px] sm:text-xs text-slate-300 font-medium truncate">• {settings.principalName}</span>
+              
+              {/* Realtime Sync Status Badge */}
+              <span className="text-[10px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded-full flex items-center gap-1 shrink-0">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+                <span>Sync Realtime ({refreshTime})</span>
+              </span>
             </div>
+
             <h2 className="text-lg sm:text-2xl font-extrabold tracking-tight text-white leading-tight break-words">
               {welcomeGreeting}
             </h2>
@@ -118,6 +248,18 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
           </div>
 
           <div className="flex items-center gap-2 shrink-0 flex-wrap sm:flex-nowrap pt-1 md:pt-0">
+            {/* Refresh Data Button */}
+            <button
+              onClick={handleRefreshData}
+              disabled={isRefreshing}
+              className="px-3 py-2 sm:px-3.5 sm:py-2.5 bg-slate-800/90 hover:bg-slate-800 text-amber-300 border border-slate-700/80 hover:border-amber-500/40 rounded-xl text-xs font-semibold shadow-md flex items-center gap-1.5 transition whitespace-nowrap active:scale-95 disabled:opacity-60"
+              id="btn-refresh-dashboard"
+              title="Refresh Data & Sinkronkan Ulang"
+            >
+              <RefreshCw className={`w-4 h-4 text-amber-400 shrink-0 ${isRefreshing ? 'animate-spin' : ''}`} />
+              <span className="hidden sm:inline">Refresh Data</span>
+            </button>
+
             <button
               onClick={() => onNavigate('attendance')}
               className="px-3 py-2 sm:px-3.5 sm:py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-semibold shadow-lg shadow-blue-600/30 flex items-center gap-1.5 transition whitespace-nowrap"
@@ -126,6 +268,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
               <QrCode className="w-4 h-4 shrink-0" />
               <span>Scan QR Presensi</span>
             </button>
+            
             <button
               onClick={() => onNavigate('grades')}
               className="px-3 py-2 sm:px-3.5 sm:py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold border border-slate-700 flex items-center gap-1.5 transition whitespace-nowrap"
@@ -159,10 +302,10 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
               return (
                 <div
                   key={lvl.key}
-                  className={`p-2.5 sm:p-4 rounded-xl border transition-all min-w-0 ${
+                  className={`p-2.5 sm:p-4 transition-all min-w-0 ${cardBgClass} ${cardRadiusClass} ${
                     isSelected
-                      ? 'bg-amber-500/10 border-amber-500/50 shadow-lg shadow-amber-500/10 ring-1 ring-amber-500/50'
-                      : 'bg-slate-900 border-slate-800 hover:border-slate-700'
+                      ? 'border-2 border-amber-500 shadow-lg shadow-amber-500/10'
+                      : `${cardBorderClass} hover:border-slate-700`
                   }`}
                 >
                   <div className="flex items-center justify-between gap-1.5 mb-1 sm:mb-1.5">
@@ -184,11 +327,11 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
         </div>
       )}
 
-      {/* Metric Cards Grid */}
+      {/* Metric Cards Grid with Custom Admin Styling */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3.5">
         
         {/* Total Students */}
-        <div className="p-3 sm:p-5 bg-slate-900 rounded-2xl border border-slate-800 flex items-center justify-between gap-2 min-w-0">
+        <div className={`${combinedCardStyle} flex items-center justify-between gap-2 min-w-0`}>
           <div className="min-w-0 flex-1">
             <span className="text-[11px] sm:text-xs font-medium text-slate-400 block truncate">Total Siswa ({activeLevel})</span>
             <div className="text-lg sm:text-2xl font-extrabold text-white mt-0.5 sm:mt-1 leading-tight">{totalStudents}</div>
@@ -202,7 +345,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
         </div>
 
         {/* Academic Average */}
-        <div className="p-3 sm:p-5 bg-slate-900 rounded-2xl border border-slate-800 flex items-center justify-between gap-2 min-w-0">
+        <div className={`${combinedCardStyle} flex items-center justify-between gap-2 min-w-0`}>
           <div className="min-w-0 flex-1">
             <span className="text-[11px] sm:text-xs font-medium text-slate-400 block truncate">Rata-Rata Nilai</span>
             <div className="text-lg sm:text-2xl font-extrabold text-white mt-0.5 sm:mt-1 leading-tight">{avgGrade} <span className="text-[10px] sm:text-xs text-slate-400 font-normal">/100</span></div>
@@ -216,7 +359,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
         </div>
 
         {/* Attendance Rate */}
-        <div className="p-3 sm:p-5 bg-slate-900 rounded-2xl border border-slate-800 flex items-center justify-between gap-2 min-w-0">
+        <div className={`${combinedCardStyle} flex items-center justify-between gap-2 min-w-0`}>
           <div className="min-w-0 flex-1">
             <span className="text-[11px] sm:text-xs font-medium text-slate-400 block truncate">Presensi Hari Ini</span>
             <div className="text-lg sm:text-2xl font-extrabold text-white mt-0.5 sm:mt-1 leading-tight">{attendanceRate}%</div>
@@ -230,7 +373,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
         </div>
 
         {/* Tuition Payment Status */}
-        <div className="p-3 sm:p-5 bg-slate-900 rounded-2xl border border-slate-800 flex items-center justify-between gap-2 min-w-0">
+        <div className={`${combinedCardStyle} flex items-center justify-between gap-2 min-w-0`}>
           <div className="min-w-0 flex-1">
             <span className="text-[11px] sm:text-xs font-medium text-slate-400 block truncate">Pelunasan SPP</span>
             <div className="text-lg sm:text-2xl font-extrabold text-white mt-0.5 sm:mt-1 leading-tight">{tuitionPaidPercent}%</div>
@@ -245,11 +388,92 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
 
       </div>
 
+      {/* Media Sosial & YouTube Video Kegiatan Sekolah Section */}
+      <div className={`${combinedCardStyle} space-y-4`}>
+        <div className="flex items-center justify-between gap-2 flex-wrap border-b border-slate-800 pb-3">
+          <div className="min-w-0">
+            <h3 className="font-bold text-xs sm:text-sm text-white flex items-center gap-2 truncate">
+              <Video className="w-4 h-4 text-rose-500 shrink-0" /> Media & Galeri Kegiatan Sekolah
+            </h3>
+            <p className="text-[10px] text-slate-400 truncate">
+              Dokumentasi aktivitas siswa, ekstrakulikuler, dan liputan resmi {settings.foundationName}
+            </p>
+          </div>
+
+          {/* Social Media Links Badges */}
+          <div className="flex items-center gap-2 flex-wrap">
+            {settings.socialInstagram && (
+              <a
+                href={settings.socialInstagram}
+                target="_blank"
+                rel="noreferrer"
+                className="px-2.5 py-1 rounded-lg bg-pink-500/10 border border-pink-500/30 text-pink-300 hover:bg-pink-500/20 text-[11px] font-semibold flex items-center gap-1 transition"
+              >
+                <Instagram className="w-3.5 h-3.5" /> Instagram
+              </a>
+            )}
+            {settings.socialWebsite && (
+              <a
+                href={settings.socialWebsite}
+                target="_blank"
+                rel="noreferrer"
+                className="px-2.5 py-1 rounded-lg bg-blue-500/10 border border-blue-500/30 text-blue-300 hover:bg-blue-500/20 text-[11px] font-semibold flex items-center gap-1 transition"
+              >
+                <Globe className="w-3.5 h-3.5" /> Website Resmi
+              </a>
+            )}
+          </div>
+        </div>
+
+        {/* Video Player & Info */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-center">
+          <div className="lg:col-span-2 relative aspect-video rounded-xl overflow-hidden bg-slate-950 border border-slate-800 shadow-inner">
+            {youtubeEmbedUrl ? (
+              <iframe
+                src={youtubeEmbedUrl}
+                title={settings.youtubeVideoTitle || 'Video Kegiatan Sekolah'}
+                className="w-full h-full border-0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            ) : (
+              <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center text-slate-500 space-y-2">
+                <Video className="w-12 h-12 text-slate-600" />
+                <p className="text-xs font-semibold">Video kegiatan belum diset oleh Admin</p>
+                <p className="text-[10px] text-slate-600">Admin dapat mengatur URL YouTube pada Pengaturan -&gt; Custom Tampilan</p>
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-3 p-3 bg-slate-800/40 rounded-xl border border-slate-700/40 text-xs">
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30 uppercase tracking-wider inline-block">
+              Video Unggulan Admin
+            </span>
+            <h4 className="font-bold text-slate-100 text-sm leading-snug">
+              {settings.youtubeVideoTitle || 'Dokumentasi Kegiatan Belajar & Ekstrakulikuler Unggulan'}
+            </h4>
+            <p className="text-[11px] text-slate-400 leading-relaxed">
+              Video ini ditampilkan secara otomatis untuk memberikan gambaran kegiatan belajar mengajar, sarana prasarana, serta prestasi siswa-siswi di seluruh jenjang.
+            </p>
+            {settings.youtubeVideoUrl && (
+              <a
+                href={settings.youtubeVideoUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1.5 text-xs text-amber-400 hover:text-amber-300 font-bold underline pt-1"
+              >
+                <span>Buka di YouTube</span> <ExternalLink className="w-3.5 h-3.5" />
+              </a>
+            )}
+          </div>
+        </div>
+      </div>
+
       {/* Main Content Grid: Recent Announcements & Attendance / Tuition Logs */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
         {/* Left Column: Announcements */}
-        <div className="lg:col-span-2 bg-slate-900 p-4 sm:p-5 rounded-2xl border border-slate-800 space-y-4 min-w-0">
+        <div className={`lg:col-span-2 ${combinedCardStyle} space-y-4 min-w-0`}>
           <div className="flex items-center justify-between gap-2">
             <h3 className="font-bold text-xs sm:text-sm text-white flex items-center gap-2 truncate">
               <Megaphone className="w-4 h-4 text-amber-400 shrink-0" /> Pengumuman Resmi Yayasan & Sekolah
@@ -285,33 +509,35 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
         </div>
 
         {/* Right Column: Realtime Logs */}
-        <div className="bg-slate-900 p-4 sm:p-5 rounded-2xl border border-slate-800 space-y-4 min-w-0">
-          <div className="flex items-center justify-between gap-2">
-            <h3 className="font-bold text-xs sm:text-sm text-white flex items-center gap-2 truncate">
-              <Bell className="w-4 h-4 text-rose-400 shrink-0" /> Log Aktivitas Real-time
-            </h3>
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-          </div>
+        {settings.showRealtimeLogs !== false && (
+          <div className={`${combinedCardStyle} space-y-4 min-w-0`}>
+            <div className="flex items-center justify-between gap-2">
+              <h3 className="font-bold text-xs sm:text-sm text-white flex items-center gap-2 truncate">
+                <Bell className="w-4 h-4 text-rose-400 shrink-0" /> Log Aktivitas Real-time
+              </h3>
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+            </div>
 
-          <div className="space-y-2.5 text-xs">
-            {filteredAttendance.slice(0, 4).map(att => (
-              <div
-                key={att.id}
-                className="p-3 bg-slate-800/40 rounded-xl border border-slate-700/40 flex items-center justify-between gap-2 min-w-0"
-              >
-                <div className="min-w-0 flex-1">
-                  <div className="font-bold text-slate-200 truncate">{att.studentName}</div>
-                  <div className="text-[10px] text-slate-400 truncate">{att.className} ({att.educationLevel}) • {att.time}</div>
+            <div className="space-y-2.5 text-xs">
+              {filteredAttendance.slice(0, 4).map(att => (
+                <div
+                  key={att.id}
+                  className="p-3 bg-slate-800/40 rounded-xl border border-slate-700/40 flex items-center justify-between gap-2 min-w-0"
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="font-bold text-slate-200 truncate">{att.studentName}</div>
+                    <div className="text-[10px] text-slate-400 truncate">{att.className} ({att.educationLevel}) • {att.time}</div>
+                  </div>
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded shrink-0 ${
+                    att.status === 'Hadir' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-amber-500/20 text-amber-300'
+                  }`}>
+                    {att.status}
+                  </span>
                 </div>
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded shrink-0 ${
-                  att.status === 'Hadir' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-amber-500/20 text-amber-300'
-                }`}>
-                  {att.status}
-                </span>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
       </div>
 

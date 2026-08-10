@@ -30,7 +30,9 @@ import {
   Mail,
   ExternalLink,
   AlertTriangle,
-  CreditCard
+  CreditCard,
+  Megaphone,
+  Bell
 } from 'lucide-react';
 import { SchoolSettings, EducationLevel, SubjectConfig, UnblockRequest } from '../types';
 
@@ -626,13 +628,82 @@ export const SchoolSettingsView: React.FC<SchoolSettingsViewProps> = ({
               </div>
             </div>
 
-            {/* Section 2: Layout Komponen Dashboard */}
+            {/* Section 2: Layout Komponen & Style Kartu Dashboard */}
             <div className="pt-4 border-t border-slate-800 space-y-4">
               <h4 className="font-bold text-xs uppercase tracking-wider text-emerald-400 flex items-center gap-2">
-                <Layers className="w-3.5 h-3.5" /> Visibilitas Komponen Dashboard
+                <Layers className="w-3.5 h-3.5" /> Style Kartu & Visibilitas Komponen Dashboard
               </h4>
 
-              <div className="space-y-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">
+                    Warna Background Kartu
+                  </label>
+                  <select
+                    value={form.cardBgColor || 'slate'}
+                    onChange={e => setForm({ ...form, cardBgColor: e.target.value as any })}
+                    className="w-full p-2.5 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 font-medium focus:border-blue-500 focus:outline-none"
+                  >
+                    <option value="slate">Slate Dark (Default)</option>
+                    <option value="zinc">Zinc Dark (Abu-abu Modern)</option>
+                    <option value="indigo">Deep Indigo (Biru Nila Gelap)</option>
+                    <option value="emerald">Dark Emerald (Hijau Gelap)</option>
+                    <option value="amber">Amber Dark (Cokelat Emas Gelap)</option>
+                    <option value="dark">Midnight Black (Hitam Pekat)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">
+                    Warna Garis Border Kartu
+                  </label>
+                  <select
+                    value={form.cardBorderColor || 'slate'}
+                    onChange={e => setForm({ ...form, cardBorderColor: e.target.value as any })}
+                    className="w-full p-2.5 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 font-medium focus:border-blue-500 focus:outline-none"
+                  >
+                    <option value="slate">Border Slate (Standard)</option>
+                    <option value="blue">Border Blue Glowing</option>
+                    <option value="amber">Border Amber Gold</option>
+                    <option value="emerald">Border Emerald Green</option>
+                    <option value="purple">Border Royal Purple</option>
+                    <option value="none">Tanpa Garis Border (Flat)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">
+                    Ukuran Padding / Spasi
+                  </label>
+                  <select
+                    value={form.cardPadding || 'normal'}
+                    onChange={e => setForm({ ...form, cardPadding: e.target.value as any })}
+                    className="w-full p-2.5 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 font-medium focus:border-blue-500 focus:outline-none"
+                  >
+                    <option value="compact">Ringkas (Compact p-3)</option>
+                    <option value="normal">Normal (Standard p-4)</option>
+                    <option value="spacious">Lapang (Spacious p-6)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">
+                    Lengkungan Sudut Kartu
+                  </label>
+                  <select
+                    value={form.cardRadius || 'rounded-2xl'}
+                    onChange={e => setForm({ ...form, cardRadius: e.target.value as any })}
+                    className="w-full p-2.5 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 font-medium focus:border-blue-500 focus:outline-none"
+                  >
+                    <option value="rounded-lg">Sedang (Rounded LG - 8px)</option>
+                    <option value="rounded-xl">Besar (Rounded XL - 12px)</option>
+                    <option value="rounded-2xl">Extra Besar (Rounded 2XL - 16px)</option>
+                    <option value="rounded-3xl">Pill Smooth (Rounded 3XL - 24px)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="space-y-3 pt-2">
                 <label className="flex items-center justify-between p-3 bg-slate-800/60 rounded-xl border border-slate-700/60 cursor-pointer hover:bg-slate-800 transition">
                   <div>
                     <div className="font-bold text-slate-200">Tampilkan Overview Cards Unit Jenjang</div>
@@ -658,6 +729,166 @@ export const SchoolSettingsView: React.FC<SchoolSettingsViewProps> = ({
                     className="w-5 h-5 accent-blue-600 rounded cursor-pointer"
                   />
                 </label>
+              </div>
+            </div>
+
+            {/* Section 3: Media YouTube Kegiatan & Media Sosial Sekolah */}
+            <div className="pt-4 border-t border-slate-800 space-y-4">
+              <h4 className="font-bold text-xs uppercase tracking-wider text-amber-400 flex items-center gap-2">
+                <Megaphone className="w-3.5 h-3.5" /> Media Kegiatan YouTube & Media Sosial Sekolah
+              </h4>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">
+                    URL Link Video YouTube Kegiatan
+                  </label>
+                  <input
+                    type="url"
+                    value={form.youtubeVideoUrl || ''}
+                    onChange={e => setForm({ ...form, youtubeVideoUrl: e.target.value })}
+                    className="w-full p-2.5 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 text-xs focus:border-blue-500 focus:outline-none"
+                    placeholder="https://www.youtube.com/watch?v=..."
+                  />
+                  <p className="text-[10px] text-slate-500 mt-1">
+                    Masukkan link YouTube lengkap untuk menampilkan player video kegiatan di dashboard pengguna.
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">
+                    Judul Video Kegiatan Sekolah
+                  </label>
+                  <input
+                    type="text"
+                    value={form.youtubeVideoTitle || ''}
+                    onChange={e => setForm({ ...form, youtubeVideoTitle: e.target.value })}
+                    className="w-full p-2.5 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 text-xs focus:border-blue-500 focus:outline-none"
+                    placeholder="Dokumentasi Kegiatan Belajar & Ekstrakulikuler..."
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">
+                    Link Instagram Resmi
+                  </label>
+                  <input
+                    type="url"
+                    value={form.socialInstagram || ''}
+                    onChange={e => setForm({ ...form, socialInstagram: e.target.value })}
+                    className="w-full p-2.5 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 text-xs focus:border-blue-500 focus:outline-none"
+                    placeholder="https://instagram.com/yayasannusantara"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">
+                    Link Facebook / TikTok / Website
+                  </label>
+                  <input
+                    type="url"
+                    value={form.socialWebsite || ''}
+                    onChange={e => setForm({ ...form, socialWebsite: e.target.value })}
+                    className="w-full p-2.5 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 text-xs focus:border-blue-500 focus:outline-none"
+                    placeholder="https://yayasan-nusantara.sch.id"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Section 4: Broadcast Peringatan / Announcement Real-time dari Admin */}
+            <div className="pt-4 border-t border-slate-800 space-y-4">
+              <h4 className="font-bold text-xs uppercase tracking-wider text-rose-400 flex items-center gap-2">
+                <Bell className="w-3.5 h-3.5" /> Pengiriman Broadcast Notifikasi Peringatan Admin
+              </h4>
+
+              <div className="p-4 bg-slate-800/80 rounded-2xl border border-slate-700/80 space-y-4">
+                <label className="flex items-center justify-between cursor-pointer">
+                  <div>
+                    <div className="font-bold text-slate-100 text-xs">Tampilkan Banner Broadcast Peringatan di Dashboard Semua Pengguna</div>
+                    <div className="text-[10px] text-slate-400">Pesan ini akan langsung muncul di bagian paling atas dashboard seluruh siswa, guru, dan wali murid secara realtime.</div>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={form.broadcastNotification?.active ?? true}
+                    onChange={e => setForm({
+                      ...form,
+                      broadcastNotification: {
+                        active: e.target.checked,
+                        title: form.broadcastNotification?.title || '📢 PENGUMUMAN PENTING ADMIN YAYASAN',
+                        message: form.broadcastNotification?.message || 'Pengumuman terbaru dari Admin Yayasan...',
+                        type: form.broadcastNotification?.type || 'warning',
+                        date: new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }),
+                        id: `broadcast-${Date.now()}`
+                      }
+                    })}
+                    className="w-5 h-5 accent-rose-500 rounded cursor-pointer"
+                  />
+                </label>
+
+                {form.broadcastNotification?.active && (
+                  <div className="space-y-3 pt-2 border-t border-slate-700">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div className="sm:col-span-2">
+                        <label className="block text-slate-300 font-semibold mb-1">Judul Peringatan / Pengumuman</label>
+                        <input
+                          type="text"
+                          value={form.broadcastNotification?.title || ''}
+                          onChange={e => setForm({
+                            ...form,
+                            broadcastNotification: {
+                              ...form.broadcastNotification!,
+                              title: e.target.value,
+                              id: `broadcast-${Date.now()}`
+                            }
+                          })}
+                          className="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-xl text-slate-100 text-xs font-bold focus:border-rose-500 focus:outline-none"
+                          placeholder="Judul Peringatan..."
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-slate-300 font-semibold mb-1">Tipe Pesan</label>
+                        <select
+                          value={form.broadcastNotification?.type || 'warning'}
+                          onChange={e => setForm({
+                            ...form,
+                            broadcastNotification: {
+                              ...form.broadcastNotification!,
+                              type: e.target.value as any,
+                              id: `broadcast-${Date.now()}`
+                            }
+                          })}
+                          className="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-xl text-slate-100 text-xs font-semibold focus:border-rose-500 focus:outline-none"
+                        >
+                          <option value="warning">⚠️ Peringatan (Kuning Amber)</option>
+                          <option value="danger">🚨 Bahaya / Urgen (Merah Rose)</option>
+                          <option value="info">ℹ️ Informasi System (Biru)</option>
+                          <option value="success">✅ Sukses / Pengumuman (Hijau)</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-slate-300 font-semibold mb-1">Isi Pesan Peringatan / Pengumuman</label>
+                      <textarea
+                        rows={3}
+                        value={form.broadcastNotification?.message || ''}
+                        onChange={e => setForm({
+                          ...form,
+                          broadcastNotification: {
+                            ...form.broadcastNotification!,
+                            message: e.target.value,
+                            date: new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }),
+                            id: `broadcast-${Date.now()}`
+                          }
+                        })}
+                        className="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-xl text-slate-100 text-xs focus:border-rose-500 focus:outline-none leading-relaxed"
+                        placeholder="Tuliskan detail pengumuman atau instruksi untuk seluruh pengguna..."
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 

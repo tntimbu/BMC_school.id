@@ -56,7 +56,35 @@ import { LoginPage } from './components/LoginPage';
 import { ShieldCheck, Activity, Lock, Cloud, Cpu, Crown, ShieldAlert } from 'lucide-react';
 
 export default function App() {
-  const [settings, setSettings] = useState<SchoolSettings>(initialSchoolSettings);
+  const [settings, setSettings] = useState<SchoolSettings>(() => {
+    const saved = localStorage.getItem('siakad_school_settings');
+    if (saved) {
+      try {
+        return { ...initialSchoolSettings, ...JSON.parse(saved) };
+      } catch (err) {}
+    }
+    return initialSchoolSettings;
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('siakad_school_settings', JSON.stringify(settings));
+    } catch (err) {}
+  }, [settings]);
+
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'siakad_school_settings' && e.newValue) {
+        try {
+          const parsed = JSON.parse(e.newValue);
+          setSettings(parsed);
+        } catch (err) {}
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
   const [users, setUsers] = useState<UserProfile[]>(initialUsers);
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(initialUsers[0]);
   const [students, setStudents] = useState<Student[]>(initialStudents);
