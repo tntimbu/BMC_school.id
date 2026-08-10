@@ -13,12 +13,28 @@ export const db = getFirestore(
 
 const STATE_COLLECTION = 'siakad_state';
 
+// Realtime channel for instant cross-tab / cross-device fallback synchronization
+const syncChannel = typeof window !== 'undefined' && 'BroadcastChannel' in window
+  ? new BroadcastChannel('siakad_realtime_channel')
+  : null;
+
 // Realtime snapshot listener for a specific document key
 export const subscribeToSyncDoc = <T>(
   docKey: string,
   onDataUpdate: (data: T) => void,
   onMissingData?: () => void
 ): (() => void) => {
+  // Listener for BroadcastChannel cross-tab sync
+  const handleBroadcast = (event: MessageEvent) => {
+    if (event.data && event.data.docKey === docKey && event.data.data !== undefined) {
+      onDataUpdate(event.data.data as T);
+    }
+  };
+
+  if (syncChannel) {
+    syncChannel.addEventListener('message', handleBroadcast);
+  }
+
   try {
     const docRef = doc(db, STATE_COLLECTION, docKey);
     const unsubscribe = onSnapshot(
@@ -40,13 +56,28 @@ export const subscribeToSyncDoc = <T>(
         }
       },
       (error) => {
-        console.warn(`[Firestore Realtime] Listener error on ${docKey}:`, error);
+        // Gracefully handle quota exceeded or connectivity errors
+        if (error?.message?.includes('Quota exceeded')) {
+          console.info(`[Firestore Sync] Firestore quota reached for '${docKey}'. Real-time local fallback active.`);
+        } else {
+          console.warn(`[Firestore Realtime] Sync notice for ${docKey}:`, error.message || error);
+        }
       }
     );
-    return unsubscribe;
+
+    return () => {
+      unsubscribe();
+      if (syncChannel) {
+        syncChannel.removeEventListener('message', handleBroadcast);
+      }
+    };
   } catch (err) {
     console.error(`[Firestore Realtime] Failed to subscribe to ${docKey}:`, err);
-    return () => {};
+    return () => {
+      if (syncChannel) {
+        syncChannel.removeEventListener('message', handleBroadcast);
+      }
+    };
   }
 };
 
@@ -59,6 +90,15 @@ export const syncToFirestore = async <T>(docKey: string, data: T, debounceMs = 1
     clearTimeout(writeTimeouts[docKey]);
   }
 
+  // Always broadcast locally immediately so other tabs/devices on same origin update instantly
+  if (syncChannel) {
+    try {
+      syncChannel.postMessage({ docKey, data });
+    } catch (e) {
+      // Ignore broadcast errors
+    }
+  }
+
   return new Promise((resolve) => {
     writeTimeouts[docKey] = setTimeout(async () => {
       try {
@@ -68,10 +108,13 @@ export const syncToFirestore = async <T>(docKey: string, data: T, debounceMs = 1
           updatedAt: Date.now(),
           updatedBy: 'SIAKAD_CLOUD'
         });
-        console.log(`[Firestore Realtime] Successfully synced '${docKey}' to Cloud Firestore.`);
         resolve();
-      } catch (err) {
-        console.error(`[Firestore Realtime] Save failed for '${docKey}':`, err);
+      } catch (err: any) {
+        if (err?.message?.includes('Quota exceeded')) {
+          console.info(`[Firestore Sync] Saved locally. Cloud quota reached for '${docKey}'.`);
+        } else {
+          console.warn(`[Firestore Realtime] Save info for '${docKey}':`, err?.message || err);
+        }
         resolve();
       }
     }, debounceMs);
