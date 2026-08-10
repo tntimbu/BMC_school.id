@@ -50,6 +50,9 @@ interface DashboardOverviewProps {
   activeLevel?: EducationLevel | 'Semua';
   onNavigate: (tab: ActiveTab) => void;
   onUpdateSettings?: (updated: Partial<SchoolSettings>) => void;
+  onAddStudent?: (newStudent: Student) => void;
+  onUpdateStudent?: (updatedStudent: Student) => void;
+  onDeleteStudent?: (studentId: string) => void;
 }
 
 export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
@@ -64,12 +67,49 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
   settings,
   activeLevel = 'Semua',
   onNavigate,
-  onUpdateSettings
+  onUpdateSettings,
+  onAddStudent,
+  onUpdateStudent,
+  onDeleteStudent
 }) => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showRefreshToast, setShowRefreshToast] = useState(false);
   const [dismissBroadcast, setDismissBroadcast] = useState(false);
   const [showBroadcastModal, setShowBroadcastModal] = useState(false);
+
+  // Student Management State
+  const [showAddStudentModal, setShowAddStudentModal] = useState(false);
+  const [showStudentListModal, setShowStudentListModal] = useState(false);
+  const [editingStudent, setEditingStudent] = useState<Student | null>(null);
+  const [studentSearch, setStudentSearch] = useState('');
+  const [studentLevelFilter, setStudentLevelFilter] = useState<EducationLevel | 'Semua'>('Semua');
+
+  // Student Form State
+  const [studentFormData, setStudentFormData] = useState<{
+    nisn: string;
+    name: string;
+    gender: 'L' | 'P';
+    className: string;
+    educationLevel: EducationLevel;
+    parentName: string;
+    parentEmail: string;
+    parentPhone: string;
+    address: string;
+    birthDate: string;
+    status: 'Aktif' | 'Alumni' | 'Cuti' | 'Pindah';
+  }>({
+    nisn: '',
+    name: '',
+    gender: 'L',
+    className: 'XII IPA 1',
+    educationLevel: 'SMA',
+    parentName: '',
+    parentEmail: '',
+    parentPhone: '',
+    address: '',
+    birthDate: '2010-01-01',
+    status: 'Aktif'
+  });
 
   // Broadcast Form State
   const [alertTitle, setAlertTitle] = useState(settings.broadcastNotification?.title || '');
@@ -148,6 +188,82 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
       setAlertMessage('');
       setDismissBroadcast(true);
       setShowBroadcastModal(false);
+    }
+  };
+
+  // Student Form Handlers
+  const openAddStudentModal = (defaultLevel?: EducationLevel) => {
+    setEditingStudent(null);
+    setStudentFormData({
+      nisn: `317${Math.floor(1000000000 + Math.random() * 9000000000)}`,
+      name: '',
+      gender: 'L',
+      className: defaultLevel === 'KB-TK' ? 'KB B' : defaultLevel === 'SD' ? '5 A' : defaultLevel === 'SMP' ? 'VIII B' : 'XII IPA 1',
+      educationLevel: defaultLevel || (activeLevel === 'Semua' ? 'SMA' : activeLevel),
+      parentName: '',
+      parentEmail: '',
+      parentPhone: '081234567890',
+      address: 'Jl. Merdeka No. 12, Jakarta',
+      birthDate: '2010-05-15',
+      status: 'Aktif'
+    });
+    setShowAddStudentModal(true);
+  };
+
+  const openEditStudentModal = (student: Student) => {
+    setEditingStudent(student);
+    setStudentFormData({
+      nisn: student.nisn,
+      name: student.name,
+      gender: student.gender,
+      className: student.className,
+      educationLevel: student.educationLevel,
+      parentName: student.parentName,
+      parentEmail: student.parentEmail,
+      parentPhone: student.parentPhone,
+      address: student.address,
+      birthDate: student.birthDate,
+      status: student.status
+    });
+    setShowAddStudentModal(true);
+  };
+
+  const handleSaveStudent = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!studentFormData.name.trim()) {
+      alert('Mohon isi Nama Lengkap Siswa!');
+      return;
+    }
+
+    const defaultPhoto = studentFormData.gender === 'P'
+      ? 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=200'
+      : 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&q=80&w=200';
+
+    if (editingStudent) {
+      const updatedStudent: Student = {
+        ...editingStudent,
+        ...studentFormData,
+        photoUrl: editingStudent.photoUrl || defaultPhoto
+      };
+      if (onUpdateStudent) onUpdateStudent(updatedStudent);
+      alert(`Data siswa ${updatedStudent.name} berhasil diperbarui & tersingkronisasi!`);
+    } else {
+      const newStudent: Student = {
+        id: `std-${Date.now()}`,
+        photoUrl: defaultPhoto,
+        ...studentFormData
+      };
+      if (onAddStudent) onAddStudent(newStudent);
+      alert(`Siswa baru ${newStudent.name} berhasil ditambahkan! Jumlah siswa di dashboard otomatis diperbarui secara realtime.`);
+    }
+
+    setShowAddStudentModal(false);
+  };
+
+  const handleDeleteStudentClick = (student: Student) => {
+    if (window.confirm(`Apakah Anda yakin ingin MENGHAPUS data siswa "${student.name}" (${student.className})?`)) {
+      if (onDeleteStudent) onDeleteStudent(student.id);
+      alert(`Data siswa "${student.name}" telah dihapus.`);
     }
   };
 
@@ -521,9 +637,29 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
                 Rangkuman statistik jumlah siswa & status operasional per jenjang pendidikan
               </p>
             </div>
-            <span className="text-[11px] text-amber-400 font-semibold bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded-lg shrink-0">
-              Tampilan: {activeLevel === 'Semua' ? 'Semua Jenjang' : activeLevel}
-            </span>
+            <div className="flex items-center gap-2 flex-wrap">
+              {isAdminOrSuper && (
+                <button
+                  onClick={() => openAddStudentModal()}
+                  className="px-2.5 py-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 rounded-lg text-xs font-bold flex items-center gap-1 transition shadow-sm"
+                  id="btn-add-student-unit-header"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>+ Tambah Siswa</span>
+                </button>
+              )}
+              <button
+                onClick={() => setShowStudentListModal(true)}
+                className="px-2.5 py-1 bg-blue-600/30 hover:bg-blue-600/50 text-blue-300 border border-blue-500/40 rounded-lg text-xs font-bold flex items-center gap-1 transition shadow-sm"
+                id="btn-manage-students-header"
+              >
+                <Users className="w-3.5 h-3.5 text-blue-400" />
+                <span>Data Siswa ({students.length})</span>
+              </button>
+              <span className="text-[11px] text-amber-400 font-semibold bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded-lg shrink-0">
+                Tampilan: {activeLevel === 'Semua' ? 'Semua Jenjang' : activeLevel}
+              </span>
+            </div>
           </div>
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3.5">
@@ -535,7 +671,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
               return (
                 <div
                   key={lvl.key}
-                  className={`p-3 sm:p-4 rounded-xl transition-all min-w-0 bg-slate-800/60 border ${
+                  className={`p-3 sm:p-4 rounded-xl transition-all min-w-0 bg-slate-800/60 border relative group ${
                     isSelected
                       ? 'border-amber-500 ring-1 ring-amber-500/50 bg-amber-500/10 shadow-lg shadow-amber-500/10'
                       : 'border-slate-700/70 hover:border-slate-500'
@@ -550,9 +686,21 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
                   <h4 className="font-bold text-white text-xs sm:text-sm truncate" title={customName}>
                     {customName}
                   </h4>
-                  <p className="text-[9px] sm:text-[10px] text-slate-400 mt-1 truncate">
-                    Status: TA {settings.academicYear}
-                  </p>
+                  <div className="flex items-center justify-between gap-1 mt-2 pt-2 border-t border-slate-700/50">
+                    <p className="text-[9px] sm:text-[10px] text-slate-400 truncate">
+                      TA {settings.academicYear}
+                    </p>
+                    {isAdminOrSuper && (
+                      <button
+                        onClick={() => openAddStudentModal(lvl.key)}
+                        className="text-[10px] text-amber-400 hover:text-amber-300 font-bold hover:underline flex items-center gap-0.5"
+                        title={`Tambah siswa baru di unit ${lvl.key}`}
+                      >
+                        <Plus className="w-3 h-3" />
+                        <span>Siswa</span>
+                      </button>
+                    )}
+                  </div>
                 </div>
               );
             })}
@@ -563,17 +711,40 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
       {/* Metric Cards Grid with Custom Admin Styling */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3.5">
         
-        {/* Total Students */}
-        <div className={`${combinedCardStyle} flex items-center justify-between gap-2 min-w-0 h-full`}>
-          <div className="min-w-0 flex-1">
-            <span className="text-[11px] sm:text-xs font-medium text-slate-400 block truncate">Total Siswa ({activeLevel})</span>
-            <div className="text-lg sm:text-2xl font-extrabold text-white mt-0.5 sm:mt-1 leading-tight">{totalStudents}</div>
-            <span className="text-[10px] sm:text-[11px] text-emerald-400 flex items-center gap-1 mt-0.5 sm:mt-1 font-medium truncate">
-              <TrendingUp className="w-3 h-3 shrink-0" /> 100% Terdaftar
-            </span>
+        {/* Total Students Metric Card */}
+        <div className={`${combinedCardStyle} flex flex-col justify-between gap-2 min-w-0 h-full relative group`}>
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0 flex-1">
+              <span className="text-[11px] sm:text-xs font-medium text-slate-400 block truncate">Total Siswa ({activeLevel})</span>
+              <div className="text-lg sm:text-2xl font-extrabold text-white mt-0.5 sm:mt-1 leading-tight">{totalStudents}</div>
+              <span className="text-[10px] sm:text-[11px] text-emerald-400 flex items-center gap-1 mt-0.5 font-medium truncate">
+                <TrendingUp className="w-3 h-3 shrink-0" /> Realtime Sync Active
+              </span>
+            </div>
+            <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center shrink-0">
+              <Users className="w-4 h-4 sm:w-5 sm:h-5" />
+            </div>
           </div>
-          <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center shrink-0">
-            <Users className="w-4 h-4 sm:w-6 sm:h-6" />
+
+          <div className="flex items-center gap-1.5 pt-2 border-t border-slate-800/80 mt-1 flex-wrap sm:flex-nowrap">
+            {isAdminOrSuper && (
+              <button
+                onClick={() => openAddStudentModal()}
+                className="flex-1 px-2 py-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 rounded-lg text-[10px] sm:text-xs font-bold flex items-center justify-center gap-1 transition shadow-sm"
+                id="btn-add-student-card"
+              >
+                <Plus className="w-3 h-3" />
+                <span>+ Tambah</span>
+              </button>
+            )}
+            <button
+              onClick={() => setShowStudentListModal(true)}
+              className="flex-1 px-2 py-1 bg-blue-600/20 hover:bg-blue-600/40 text-blue-300 border border-blue-500/30 rounded-lg text-[10px] sm:text-xs font-bold flex items-center justify-center gap-1 transition shadow-sm"
+              id="btn-view-students-card"
+            >
+              <Users className="w-3 h-3" />
+              <span>Kelola ({totalStudents})</span>
+            </button>
           </div>
         </div>
 
@@ -846,6 +1017,380 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
         )}
 
       </div>
+
+      {/* Student List & Master Data Management Modal */}
+      {showStudentListModal && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-5 animate-in fade-in duration-200 overflow-y-auto">
+          <div className="bg-slate-900 border border-slate-700/80 rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden my-auto">
+            {/* Modal Header */}
+            <div className="p-4 sm:p-5 bg-slate-950 border-b border-slate-800 flex items-center justify-between gap-3 shrink-0">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 bg-blue-500/20 text-blue-400 rounded-xl border border-blue-500/30">
+                    <Users className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-extrabold text-white text-base sm:text-lg flex items-center gap-2">
+                      Master Data Siswa Yayasan
+                      <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                        {filteredStudents.length} Siswa
+                      </span>
+                    </h3>
+                    <p className="text-xs text-slate-400">
+                      Kelola daftar peserta didik & tersinkronisasi otomatis di seluruh perangkat
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                {isAdminOrSuper && (
+                  <button
+                    onClick={() => openAddStudentModal()}
+                    className="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold rounded-xl flex items-center gap-1.5 shadow-lg shadow-amber-500/20 transition"
+                    id="btn-add-student-modal-header"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>+ Tambah Siswa</span>
+                  </button>
+                )}
+                <button
+                  onClick={() => setShowStudentListModal(false)}
+                  className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Filter & Search Bar */}
+            <div className="p-3 sm:p-4 bg-slate-900/90 border-b border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
+              <div className="relative w-full sm:w-72">
+                <input
+                  type="text"
+                  placeholder="Cari NISN, nama, atau kelas..."
+                  value={studentSearch}
+                  onChange={e => setStudentSearch(e.target.value)}
+                  className="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                <span className="text-xs font-medium text-slate-400 shrink-0">Jenjang:</span>
+                <select
+                  value={studentLevelFilter}
+                  onChange={e => setStudentLevelFilter(e.target.value as any)}
+                  className="bg-slate-800/80 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500"
+                >
+                  <option value="Semua">Semua Jenjang</option>
+                  <option value="KB-TK">KB & TK</option>
+                  <option value="SD">Sekolah Dasar (SD)</option>
+                  <option value="SMP">Sekolah Menengah Pertama (SMP)</option>
+                  <option value="SMA">Sekolah Menengah Atas (SMA)</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Student List View */}
+            <div className="p-4 overflow-y-auto flex-1 space-y-3">
+              {(() => {
+                const searchLower = studentSearch.toLowerCase();
+                const displayList = students.filter(s => {
+                  const matchSearch =
+                    s.name.toLowerCase().includes(searchLower) ||
+                    s.nisn.toLowerCase().includes(searchLower) ||
+                    s.className.toLowerCase().includes(searchLower) ||
+                    s.parentName.toLowerCase().includes(searchLower);
+
+                  const matchLevel = studentLevelFilter === 'Semua' || s.educationLevel === studentLevelFilter;
+                  return matchSearch && matchLevel;
+                });
+
+                if (displayList.length === 0) {
+                  return (
+                    <div className="text-center py-12 text-slate-500 space-y-3">
+                      <Users className="w-12 h-12 mx-auto text-slate-600" />
+                      <p className="text-sm font-semibold">Tidak ditemukan data siswa yang cocok.</p>
+                      {isAdminOrSuper && (
+                        <button
+                          onClick={() => openAddStudentModal()}
+                          className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold rounded-xl inline-flex items-center gap-1.5 shadow-md"
+                        >
+                          <Plus className="w-4 h-4" />
+                          <span>Tambah Siswa Baru Sekarang</span>
+                        </button>
+                      )}
+                    </div>
+                  );
+                }
+
+                return (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {displayList.map(student => (
+                      <div
+                        key={student.id}
+                        className="p-3.5 bg-slate-800/50 rounded-xl border border-slate-700/60 flex items-start gap-3 hover:border-slate-600 transition"
+                      >
+                        <img
+                          src={student.photoUrl}
+                          alt={student.name}
+                          className="w-12 h-12 rounded-xl object-cover border border-slate-700 shrink-0"
+                        />
+
+                        <div className="min-w-0 flex-1 space-y-1">
+                          <div className="flex items-center justify-between gap-1">
+                            <h4 className="font-bold text-white text-xs sm:text-sm truncate">{student.name}</h4>
+                            <span
+                              className={`text-[9px] font-bold px-1.5 py-0.5 rounded shrink-0 ${
+                                student.status === 'Aktif'
+                                  ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                                  : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                              }`}
+                            >
+                              {student.status}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-2 text-[10px] text-slate-400 flex-wrap">
+                            <span className="bg-slate-700/80 text-slate-200 px-1.5 py-0.5 rounded font-mono">
+                              NISN: {student.nisn}
+                            </span>
+                            <span className="bg-blue-500/20 text-blue-300 border border-blue-500/30 px-1.5 py-0.5 rounded font-bold">
+                              {student.educationLevel} • {student.className}
+                            </span>
+                            <span>{student.gender === 'L' ? 'Laki-laki' : 'Perempuan'}</span>
+                          </div>
+
+                          <div className="text-[10px] text-slate-400 pt-1 border-t border-slate-700/50 flex flex-col gap-0.5">
+                            <div>
+                              Ortu: <span className="text-slate-200 font-medium">{student.parentName}</span> ({student.parentPhone})
+                            </div>
+                            <div className="truncate text-slate-400">Email: {student.parentEmail}</div>
+                          </div>
+
+                          {isAdminOrSuper && (
+                            <div className="flex items-center gap-2 pt-2">
+                              <button
+                                onClick={() => openEditStudentModal(student)}
+                                className="px-2.5 py-1 bg-blue-600/30 hover:bg-blue-600/50 text-blue-300 border border-blue-500/40 rounded-lg text-[10px] font-bold flex items-center gap-1"
+                              >
+                                <Edit className="w-3 h-3" />
+                                <span>Edit</span>
+                              </button>
+                              <button
+                                onClick={() => handleDeleteStudentClick(student)}
+                                className="px-2.5 py-1 bg-rose-600/30 hover:bg-rose-600/50 text-rose-300 border border-rose-500/40 rounded-lg text-[10px] font-bold flex items-center gap-1"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                                <span>Hapus</span>
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-3 sm:p-4 bg-slate-950 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400 shrink-0">
+              <span className="flex items-center gap-1.5 text-emerald-400 font-medium">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                <span>Terhubung ke Database Cloud Firestore (Sinkronisasi Realtime Active)</span>
+              </span>
+              <button
+                onClick={() => setShowStudentListModal(false)}
+                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold"
+              >
+                Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add / Edit Student Modal */}
+      {showAddStudentModal && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-5 animate-in fade-in duration-200 overflow-y-auto">
+          <div className="bg-slate-900 border border-slate-700/80 rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden my-auto">
+            <div className="p-4 sm:p-5 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-amber-500/20 text-amber-400 rounded-xl border border-amber-500/30">
+                  <UserPlus className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-white text-sm sm:text-base">
+                    {editingStudent ? 'Edit Data Siswa' : 'Tambah Siswa Baru Admin'}
+                  </h3>
+                  <p className="text-xs text-slate-400">
+                    Data siswa akan langsung tersimpan & memperbarui jumlah siswa di dashboard secara realtime
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowAddStudentModal(false)}
+                className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveStudent} className="p-4 sm:p-6 space-y-4 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-300">Nama Lengkap Siswa *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Contoh: Ahmad Rizky"
+                    value={studentFormData.name}
+                    onChange={e => setStudentFormData(prev => ({ ...prev, name: e.target.value }))}
+                    className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white focus:outline-none focus:border-amber-500"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-300">NISN (Nomor Induk Siswa Nasional) *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Contoh: 317201987654"
+                    value={studentFormData.nisn}
+                    onChange={e => setStudentFormData(prev => ({ ...prev, nisn: e.target.value }))}
+                    className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white font-mono focus:outline-none focus:border-amber-500"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-300">Jenis Kelamin</label>
+                  <select
+                    value={studentFormData.gender}
+                    onChange={e => setStudentFormData(prev => ({ ...prev, gender: e.target.value as any }))}
+                    className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white focus:outline-none focus:border-amber-500"
+                  >
+                    <option value="L">Laki-laki</option>
+                    <option value="P">Perempuan</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-300">Jenjang Pendidikan *</label>
+                  <select
+                    value={studentFormData.educationLevel}
+                    onChange={e => setStudentFormData(prev => ({ ...prev, educationLevel: e.target.value as any }))}
+                    className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white focus:outline-none focus:border-amber-500"
+                  >
+                    <option value="KB-TK">KB & TK</option>
+                    <option value="SD">Sekolah Dasar (SD)</option>
+                    <option value="SMP">Sekolah Menengah Pertama (SMP)</option>
+                    <option value="SMA">Sekolah Menengah Atas (SMA)</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-300">Kelas / Rombel *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Contoh: XII IPA 1 atau 5 A"
+                    value={studentFormData.className}
+                    onChange={e => setStudentFormData(prev => ({ ...prev, className: e.target.value }))}
+                    className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white focus:outline-none focus:border-amber-500"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-300">Status Keaktifan</label>
+                  <select
+                    value={studentFormData.status}
+                    onChange={e => setStudentFormData(prev => ({ ...prev, status: e.target.value as any }))}
+                    className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white focus:outline-none focus:border-amber-500"
+                  >
+                    <option value="Aktif">Aktif</option>
+                    <option value="Alumni">Alumni</option>
+                    <option value="Cuti">Cuti</option>
+                    <option value="Pindah">Pindah</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-300">Nama Orang Tua / Wali *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Contoh: Bpk. Hendra Gunawan"
+                    value={studentFormData.parentName}
+                    onChange={e => setStudentFormData(prev => ({ ...prev, parentName: e.target.value }))}
+                    className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white focus:outline-none focus:border-amber-500"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-300">Email Orang Tua (Untuk Notifikasi)</label>
+                  <input
+                    type="email"
+                    placeholder="orangtua@gmail.com"
+                    value={studentFormData.parentEmail}
+                    onChange={e => setStudentFormData(prev => ({ ...prev, parentEmail: e.target.value }))}
+                    className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white focus:outline-none focus:border-amber-500"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-300">No. WhatsApp / HP Ortu</label>
+                  <input
+                    type="text"
+                    placeholder="081234567890"
+                    value={studentFormData.parentPhone}
+                    onChange={e => setStudentFormData(prev => ({ ...prev, parentPhone: e.target.value }))}
+                    className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white focus:outline-none focus:border-amber-500"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-300">Tanggal Lahir</label>
+                  <input
+                    type="date"
+                    value={studentFormData.birthDate}
+                    onChange={e => setStudentFormData(prev => ({ ...prev, birthDate: e.target.value }))}
+                    className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white focus:outline-none focus:border-amber-500"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-bold text-slate-300">Alamat Tempat Tinggal</label>
+                <textarea
+                  rows={2}
+                  placeholder="Jl. Merdeka No. 12, Jakarta"
+                  value={studentFormData.address}
+                  onChange={e => setStudentFormData(prev => ({ ...prev, address: e.target.value }))}
+                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2 text-white focus:outline-none focus:border-amber-500"
+                />
+              </div>
+
+              <div className="pt-3 border-t border-slate-800 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowAddStudentModal(false)}
+                  className="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl hover:bg-slate-700 font-semibold"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 bg-amber-600 hover:bg-amber-500 text-slate-950 font-bold rounded-xl shadow-lg shadow-amber-600/30 flex items-center gap-2"
+                >
+                  <Save className="w-4 h-4" />
+                  <span>{editingStudent ? 'Simpan Perubahan' : 'Tambah & Sinkronkan Data'}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
     </div>
   );

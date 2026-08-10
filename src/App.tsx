@@ -233,7 +233,6 @@ export default function App() {
 
   // Ref to track last JSON string received from Firestore to avoid redundant write loops
   const lastRemoteHashRef = useRef<Record<string, string>>({});
-  const isRemoteUpdateRef = useRef<Record<string, boolean>>({});
 
   // 1. Subscribe to Firestore Realtime Snapshot Listeners (Enables Instant Multi-Device Cross-Device Sync)
   useEffect(() => {
@@ -241,140 +240,154 @@ export default function App() {
       const json = JSON.stringify(data);
       if (json && json !== lastRemoteHashRef.current['settings']) {
         lastRemoteHashRef.current['settings'] = json;
-        isRemoteUpdateRef.current['settings'] = true;
         setSettings(data);
         try { localStorage.setItem('siakad_school_settings', json); } catch (e) {}
       }
+    }, () => {
+      syncToFirestore('settings', settings);
     });
 
     const unsubUsers = subscribeToSyncDoc<UserProfile[]>('users', (data) => {
       const json = JSON.stringify(data);
       if (json && json !== lastRemoteHashRef.current['users']) {
         lastRemoteHashRef.current['users'] = json;
-        isRemoteUpdateRef.current['users'] = true;
         setUsers(data);
         try { localStorage.setItem('siakad_users', json); } catch (e) {}
       }
+    }, () => {
+      syncToFirestore('users', users);
     });
 
     const unsubStudents = subscribeToSyncDoc<Student[]>('students', (data) => {
       const json = JSON.stringify(data);
       if (json && json !== lastRemoteHashRef.current['students']) {
         lastRemoteHashRef.current['students'] = json;
-        isRemoteUpdateRef.current['students'] = true;
         setStudents(data);
         try { localStorage.setItem('siakad_students', json); } catch (e) {}
       }
+    }, () => {
+      syncToFirestore('students', students);
     });
 
     const unsubGrades = subscribeToSyncDoc<Grade[]>('grades', (data) => {
       const json = JSON.stringify(data);
       if (json && json !== lastRemoteHashRef.current['grades']) {
         lastRemoteHashRef.current['grades'] = json;
-        isRemoteUpdateRef.current['grades'] = true;
         setGrades(data);
         try { localStorage.setItem('siakad_grades', json); } catch (e) {}
       }
+    }, () => {
+      syncToFirestore('grades', grades);
     });
 
     const unsubAttendance = subscribeToSyncDoc<AttendanceRecord[]>('attendance', (data) => {
       const json = JSON.stringify(data);
       if (json && json !== lastRemoteHashRef.current['attendance']) {
         lastRemoteHashRef.current['attendance'] = json;
-        isRemoteUpdateRef.current['attendance'] = true;
         setAttendance(data);
         try { localStorage.setItem('siakad_attendance', json); } catch (e) {}
       }
+    }, () => {
+      syncToFirestore('attendance', attendance);
     });
 
     const unsubTuition = subscribeToSyncDoc<TuitionRecord[]>('tuition', (data) => {
       const json = JSON.stringify(data);
       if (json && json !== lastRemoteHashRef.current['tuition']) {
         lastRemoteHashRef.current['tuition'] = json;
-        isRemoteUpdateRef.current['tuition'] = true;
         setTuition(data);
         try { localStorage.setItem('siakad_tuition', json); } catch (e) {}
       }
+    }, () => {
+      syncToFirestore('tuition', tuition);
     });
 
     const unsubAnnouncements = subscribeToSyncDoc<Announcement[]>('announcements', (data) => {
       const json = JSON.stringify(data);
       if (json && json !== lastRemoteHashRef.current['announcements']) {
         lastRemoteHashRef.current['announcements'] = json;
-        isRemoteUpdateRef.current['announcements'] = true;
         setAnnouncements(data);
         try { localStorage.setItem('siakad_announcements', json); } catch (e) {}
       }
+    }, () => {
+      syncToFirestore('announcements', announcements);
     });
 
     const unsubPPDB = subscribeToSyncDoc<PPDBApplication[]>('ppdb', (data) => {
       const json = JSON.stringify(data);
       if (json && json !== lastRemoteHashRef.current['ppdb']) {
         lastRemoteHashRef.current['ppdb'] = json;
-        isRemoteUpdateRef.current['ppdb'] = true;
         setPpdb(data);
         try { localStorage.setItem('siakad_ppdb', json); } catch (e) {}
       }
+    }, () => {
+      syncToFirestore('ppdb', ppdb);
     });
 
     const unsubEvents = subscribeToSyncDoc<CalendarEvent[]>('events', (data) => {
       const json = JSON.stringify(data);
       if (json && json !== lastRemoteHashRef.current['events']) {
         lastRemoteHashRef.current['events'] = json;
-        isRemoteUpdateRef.current['events'] = true;
         setEvents(data);
         try { localStorage.setItem('siakad_events', json); } catch (e) {}
       }
+    }, () => {
+      syncToFirestore('events', events);
     });
 
     const unsubNotifications = subscribeToSyncDoc<NotificationLog[]>('notifications', (data) => {
       const json = JSON.stringify(data);
       if (json && json !== lastRemoteHashRef.current['notifications']) {
         lastRemoteHashRef.current['notifications'] = json;
-        isRemoteUpdateRef.current['notifications'] = true;
         setNotifications(data);
         try { localStorage.setItem('siakad_notifications', json); } catch (e) {}
       }
+    }, () => {
+      syncToFirestore('notifications', notifications);
     });
 
     const unsubConversations = subscribeToSyncDoc<ChatConversation[]>('conversations', (data) => {
       const json = JSON.stringify(data);
       if (json && json !== lastRemoteHashRef.current['conversations']) {
         lastRemoteHashRef.current['conversations'] = json;
-        isRemoteUpdateRef.current['conversations'] = true;
         setConversations(data);
         try { localStorage.setItem('siakad_conversations', json); } catch (e) {}
       }
+    }, () => {
+      syncToFirestore('conversations', conversations);
     });
 
     const unsubDKN = subscribeToSyncDoc<DKNRecord[]>('dkn', (data) => {
       const json = JSON.stringify(data);
       if (json && json !== lastRemoteHashRef.current['dkn']) {
         lastRemoteHashRef.current['dkn'] = json;
-        isRemoteUpdateRef.current['dkn'] = true;
         setDknGrades(data);
         try { localStorage.setItem('siakad_dkn', json); } catch (e) {}
       }
+    }, () => {
+      syncToFirestore('dkn', dknGrades);
     });
 
     const unsubCharacter = subscribeToSyncDoc<Record<string, CharacterAssessment[]>>('character', (data) => {
       const json = JSON.stringify(data);
       if (json && json !== lastRemoteHashRef.current['character']) {
         lastRemoteHashRef.current['character'] = json;
-        isRemoteUpdateRef.current['character'] = true;
         setCharacterAssessments(data);
         try { localStorage.setItem('siakad_character', json); } catch (e) {}
       }
+    }, () => {
+      syncToFirestore('character', characterAssessments);
     });
 
     const unsubSpiritual = subscribeToSyncDoc<Record<string, SpiritualJourneyRecord>>('spiritual', (data) => {
       const json = JSON.stringify(data);
       if (json && json !== lastRemoteHashRef.current['spiritual']) {
         lastRemoteHashRef.current['spiritual'] = json;
-        isRemoteUpdateRef.current['spiritual'] = true;
         setSpiritualJourney(data);
         try { localStorage.setItem('siakad_spiritual', json); } catch (e) {}
       }
+    }, () => {
+      syncToFirestore('spiritual', spiritualJourney);
     });
 
     return () => {
@@ -401,10 +414,6 @@ export default function App() {
       const json = JSON.stringify(settings);
       localStorage.setItem('siakad_school_settings', json);
       broadcastStateSync('SYNC_SETTINGS', settings);
-      if (isRemoteUpdateRef.current['settings']) {
-        isRemoteUpdateRef.current['settings'] = false;
-        return;
-      }
       if (json !== lastRemoteHashRef.current['settings']) {
         lastRemoteHashRef.current['settings'] = json;
         syncToFirestore('settings', settings);
@@ -417,10 +426,6 @@ export default function App() {
       const json = JSON.stringify(users);
       localStorage.setItem('siakad_users', json);
       broadcastStateSync('SYNC_USERS', users);
-      if (isRemoteUpdateRef.current['users']) {
-        isRemoteUpdateRef.current['users'] = false;
-        return;
-      }
       if (json !== lastRemoteHashRef.current['users']) {
         lastRemoteHashRef.current['users'] = json;
         syncToFirestore('users', users);
@@ -433,10 +438,6 @@ export default function App() {
       const json = JSON.stringify(students);
       localStorage.setItem('siakad_students', json);
       broadcastStateSync('SYNC_STUDENTS', students);
-      if (isRemoteUpdateRef.current['students']) {
-        isRemoteUpdateRef.current['students'] = false;
-        return;
-      }
       if (json !== lastRemoteHashRef.current['students']) {
         lastRemoteHashRef.current['students'] = json;
         syncToFirestore('students', students);
@@ -449,10 +450,6 @@ export default function App() {
       const json = JSON.stringify(grades);
       localStorage.setItem('siakad_grades', json);
       broadcastStateSync('SYNC_GRADES', grades);
-      if (isRemoteUpdateRef.current['grades']) {
-        isRemoteUpdateRef.current['grades'] = false;
-        return;
-      }
       if (json !== lastRemoteHashRef.current['grades']) {
         lastRemoteHashRef.current['grades'] = json;
         syncToFirestore('grades', grades);
@@ -465,10 +462,6 @@ export default function App() {
       const json = JSON.stringify(attendance);
       localStorage.setItem('siakad_attendance', json);
       broadcastStateSync('SYNC_ATTENDANCE', attendance);
-      if (isRemoteUpdateRef.current['attendance']) {
-        isRemoteUpdateRef.current['attendance'] = false;
-        return;
-      }
       if (json !== lastRemoteHashRef.current['attendance']) {
         lastRemoteHashRef.current['attendance'] = json;
         syncToFirestore('attendance', attendance);
@@ -481,10 +474,6 @@ export default function App() {
       const json = JSON.stringify(tuition);
       localStorage.setItem('siakad_tuition', json);
       broadcastStateSync('SYNC_TUITION', tuition);
-      if (isRemoteUpdateRef.current['tuition']) {
-        isRemoteUpdateRef.current['tuition'] = false;
-        return;
-      }
       if (json !== lastRemoteHashRef.current['tuition']) {
         lastRemoteHashRef.current['tuition'] = json;
         syncToFirestore('tuition', tuition);
@@ -497,10 +486,6 @@ export default function App() {
       const json = JSON.stringify(announcements);
       localStorage.setItem('siakad_announcements', json);
       broadcastStateSync('SYNC_ANNOUNCEMENTS', announcements);
-      if (isRemoteUpdateRef.current['announcements']) {
-        isRemoteUpdateRef.current['announcements'] = false;
-        return;
-      }
       if (json !== lastRemoteHashRef.current['announcements']) {
         lastRemoteHashRef.current['announcements'] = json;
         syncToFirestore('announcements', announcements);
@@ -513,10 +498,6 @@ export default function App() {
       const json = JSON.stringify(ppdb);
       localStorage.setItem('siakad_ppdb', json);
       broadcastStateSync('SYNC_PPDB', ppdb);
-      if (isRemoteUpdateRef.current['ppdb']) {
-        isRemoteUpdateRef.current['ppdb'] = false;
-        return;
-      }
       if (json !== lastRemoteHashRef.current['ppdb']) {
         lastRemoteHashRef.current['ppdb'] = json;
         syncToFirestore('ppdb', ppdb);
@@ -529,10 +510,6 @@ export default function App() {
       const json = JSON.stringify(events);
       localStorage.setItem('siakad_events', json);
       broadcastStateSync('SYNC_EVENTS', events);
-      if (isRemoteUpdateRef.current['events']) {
-        isRemoteUpdateRef.current['events'] = false;
-        return;
-      }
       if (json !== lastRemoteHashRef.current['events']) {
         lastRemoteHashRef.current['events'] = json;
         syncToFirestore('events', events);
@@ -545,10 +522,6 @@ export default function App() {
       const json = JSON.stringify(notifications);
       localStorage.setItem('siakad_notifications', json);
       broadcastStateSync('SYNC_NOTIFICATIONS', notifications);
-      if (isRemoteUpdateRef.current['notifications']) {
-        isRemoteUpdateRef.current['notifications'] = false;
-        return;
-      }
       if (json !== lastRemoteHashRef.current['notifications']) {
         lastRemoteHashRef.current['notifications'] = json;
         syncToFirestore('notifications', notifications);
@@ -561,10 +534,6 @@ export default function App() {
       const json = JSON.stringify(conversations);
       localStorage.setItem('siakad_conversations', json);
       broadcastStateSync('SYNC_CONVERSATIONS', conversations);
-      if (isRemoteUpdateRef.current['conversations']) {
-        isRemoteUpdateRef.current['conversations'] = false;
-        return;
-      }
       if (json !== lastRemoteHashRef.current['conversations']) {
         lastRemoteHashRef.current['conversations'] = json;
         syncToFirestore('conversations', conversations);
@@ -577,10 +546,6 @@ export default function App() {
       const json = JSON.stringify(dknGrades);
       localStorage.setItem('siakad_dkn', json);
       broadcastStateSync('SYNC_DKN', dknGrades);
-      if (isRemoteUpdateRef.current['dkn']) {
-        isRemoteUpdateRef.current['dkn'] = false;
-        return;
-      }
       if (json !== lastRemoteHashRef.current['dkn']) {
         lastRemoteHashRef.current['dkn'] = json;
         syncToFirestore('dkn', dknGrades);
@@ -593,10 +558,6 @@ export default function App() {
       const json = JSON.stringify(characterAssessments);
       localStorage.setItem('siakad_character', json);
       broadcastStateSync('SYNC_CHARACTER', characterAssessments);
-      if (isRemoteUpdateRef.current['character']) {
-        isRemoteUpdateRef.current['character'] = false;
-        return;
-      }
       if (json !== lastRemoteHashRef.current['character']) {
         lastRemoteHashRef.current['character'] = json;
         syncToFirestore('character', characterAssessments);
@@ -609,10 +570,6 @@ export default function App() {
       const json = JSON.stringify(spiritualJourney);
       localStorage.setItem('siakad_spiritual', json);
       broadcastStateSync('SYNC_SPIRITUAL', spiritualJourney);
-      if (isRemoteUpdateRef.current['spiritual']) {
-        isRemoteUpdateRef.current['spiritual'] = false;
-        return;
-      }
       if (json !== lastRemoteHashRef.current['spiritual']) {
         lastRemoteHashRef.current['spiritual'] = json;
         syncToFirestore('spiritual', spiritualJourney);
@@ -985,6 +942,18 @@ export default function App() {
     setEvents(prev => [newEv, ...prev]);
   };
 
+  const handleAddStudent = (newStudent: Student) => {
+    setStudents(prev => [newStudent, ...prev]);
+  };
+
+  const handleUpdateStudent = (updatedStudent: Student) => {
+    setStudents(prev => prev.map(s => s.id === updatedStudent.id ? updatedStudent : s));
+  };
+
+  const handleDeleteStudent = (studentId: string) => {
+    setStudents(prev => prev.filter(s => s.id !== studentId));
+  };
+
   const handleUpdateSettings = async (updated: Partial<SchoolSettings>) => {
     setSettings(prev => ({ ...prev, ...updated }));
   };
@@ -1154,6 +1123,9 @@ export default function App() {
               activeLevel={activeLevel}
               onNavigate={tab => setActiveTab(tab)}
               onUpdateSettings={handleUpdateSettings}
+              onAddStudent={handleAddStudent}
+              onUpdateStudent={handleUpdateStudent}
+              onDeleteStudent={handleDeleteStudent}
             />
           )}
 
