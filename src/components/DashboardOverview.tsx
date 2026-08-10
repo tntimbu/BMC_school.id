@@ -79,6 +79,16 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
   );
   const [alertActive, setAlertActive] = useState(settings.broadcastNotification?.active ?? true);
 
+  // Sync state whenever broadcast notification changes remotely
+  useEffect(() => {
+    if (settings.broadcastNotification) {
+      setAlertTitle(settings.broadcastNotification.title || '');
+      setAlertMessage(settings.broadcastNotification.message || '');
+      setAlertType(settings.broadcastNotification.type || 'warning');
+      setAlertActive(settings.broadcastNotification.active ?? true);
+    }
+  }, [settings.broadcastNotification]);
+
   const [refreshTime, setRefreshTime] = useState(() =>
     new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
   );

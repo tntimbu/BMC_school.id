@@ -108,11 +108,11 @@ export const Navbar: React.FC<NavbarProps> = ({
                     </span>
                   )}
                 </h1>
-                <p className="text-[10px] sm:text-xs text-slate-400 flex items-center gap-1.5 truncate flex-wrap">
+                <p className="text-[10px] sm:text-xs text-slate-400 flex items-center gap-1.5 truncate">
                   <span className="text-blue-300 font-medium truncate">{getUnitDisplayName()}</span>
                   <span className="text-slate-600 shrink-0">•</span>
-                  <span className="shrink-0">TA {settings.academicYear} ({settings.currentSemester})</span>
-                  <span className="inline-flex items-center gap-1 text-[9px] sm:text-[10px] font-bold bg-emerald-950/90 text-emerald-300 border border-emerald-800 px-2 py-0.5 rounded-full shrink-0 shadow-sm" title="Terhubung Realtime dengan Firestore Cloud Sync (Multi-Perangkat)">
+                  <span className="shrink-0">TA {settings.academicYear}</span>
+                  <span className="hidden sm:inline-flex items-center gap-1 text-[9px] sm:text-[10px] font-bold bg-emerald-950/90 text-emerald-300 border border-emerald-800 px-2 py-0.5 rounded-full shrink-0 shadow-sm" title="Terhubung Realtime dengan Firestore Cloud Sync (Multi-Perangkat)">
                     <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-ping" />
                     <span>Realtime Cloud Sync</span>
                   </span>
