@@ -14,14 +14,14 @@ import {
   Sparkles,
   PhoneCall,
   Video,
-  MoreVertical,
   X,
   FileText,
   Clock,
-  Circle,
   MessageCircle,
   Filter,
-  CheckCircle2
+  CheckCircle2,
+  ArrowLeft,
+  ChevronLeft
 } from 'lucide-react';
 import { UserProfile, ChatConversation, ChatMessage } from '../types';
 
@@ -39,13 +39,13 @@ export const ChatModule: React.FC<ChatModuleProps> = ({
   onUpdateConversations
 }) => {
   const [activeChatId, setActiveChatId] = useState<string>(conversations[0]?.id || '');
+  const [showMobileChatView, setShowMobileChatView] = useState<boolean>(false);
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [roleFilter, setRoleFilter] = useState<string>('Semua');
   const [chatTypeFilter, setChatTypeFilter] = useState<'all' | 'direct' | 'group'>('all');
   const [messageText, setMessageText] = useState<string>('');
   const [attachment, setAttachment] = useState<{ name: string; url: string; type: 'image' | 'file' } | null>(null);
   const [showNewChatModal, setShowNewChatModal] = useState<boolean>(false);
-  const [newChatTargetUser, setNewChatTargetUser] = useState<string>('');
   const [newGroupTitle, setNewGroupTitle] = useState<string>('');
   const [selectedGroupMembers, setSelectedGroupMembers] = useState<string[]>([]);
   const [isCreatingGroup, setIsCreatingGroup] = useState<boolean>(false);
@@ -53,17 +53,17 @@ export const ChatModule: React.FC<ChatModuleProps> = ({
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Auto scroll to bottom when new messages arrive or chat changes
+  // Auto scroll to bottom when new messages arrive or active chat changes
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   useEffect(() => {
     scrollToBottom();
-  }, [activeChatId, conversations]);
+  }, [activeChatId, conversations, showMobileChatView]);
 
   // Active conversation object
-  const activeChat = conversations.find(c => c.id === activeChatId);
+  const activeChat = conversations.find(c => c.id === activeChatId) || conversations[0];
 
   // Filter conversations
   const filteredConversations = conversations.filter(chat => {
@@ -92,8 +92,19 @@ export const ChatModule: React.FC<ChatModuleProps> = ({
     return true;
   });
 
-  // Get recipient display details for 1-on-1 chats
+  // Get recipient display details for 1-on-1 or group chats
   const getRecipientInfo = (chat: ChatConversation) => {
+    if (!chat) {
+      return {
+        name: 'Pesan Baru',
+        role: 'system',
+        roleBadge: 'System',
+        avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
+        subtext: 'Pilih percakapan',
+        isOnline: false
+      };
+    }
+
     if (chat.isGroup) {
       return {
         name: chat.title || 'Grup Diskusi',
@@ -147,7 +158,7 @@ export const ChatModule: React.FC<ChatModuleProps> = ({
     };
 
     const updatedChats = conversations.map(c => {
-      if (c.id === activeChatId) {
+      if (c.id === activeChat.id) {
         return {
           ...c,
           messages: [...c.messages, newMsg],
@@ -161,7 +172,7 @@ export const ChatModule: React.FC<ChatModuleProps> = ({
     setMessageText('');
     setAttachment(null);
 
-    // Simulate auto-reply from recipient after 1.5s if 1-on-1 chat
+    // Simulate response from recipient after 1.2s if 1-on-1 chat
     if (!activeChat.isGroup) {
       const recipient = activeChat.participants.find(p => p.id !== currentUser.id);
       if (recipient) {
@@ -186,7 +197,7 @@ export const ChatModule: React.FC<ChatModuleProps> = ({
           };
 
           const refreshedChats = updatedChats.map(c => {
-            if (c.id === activeChatId) {
+            if (c.id === activeChat.id) {
               return {
                 ...c,
                 messages: [...c.messages, autoMsg],
@@ -203,16 +214,15 @@ export const ChatModule: React.FC<ChatModuleProps> = ({
 
   // Start direct chat
   const handleStartDirectChat = (targetUser: UserProfile) => {
-    // Check if chat already exists
     const existing = conversations.find(c => !c.isGroup && c.participantIds.includes(currentUser.id) && c.participantIds.includes(targetUser.id));
 
     if (existing) {
       setActiveChatId(existing.id);
+      setShowMobileChatView(true);
       setShowNewChatModal(false);
       return;
     }
 
-    // Create new direct chat
     const newChat: ChatConversation = {
       id: `chat-${Date.now()}`,
       isGroup: false,
@@ -252,6 +262,7 @@ export const ChatModule: React.FC<ChatModuleProps> = ({
 
     onUpdateConversations([newChat, ...conversations]);
     setActiveChatId(newChat.id);
+    setShowMobileChatView(true);
     setShowNewChatModal(false);
   };
 
@@ -292,6 +303,7 @@ export const ChatModule: React.FC<ChatModuleProps> = ({
 
     onUpdateConversations([newGroup, ...conversations]);
     setActiveChatId(newGroup.id);
+    setShowMobileChatView(true);
     setShowNewChatModal(false);
     setNewGroupTitle('');
     setSelectedGroupMembers([]);
@@ -308,32 +320,32 @@ export const ChatModule: React.FC<ChatModuleProps> = ({
   ];
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 max-w-full overflow-hidden">
       {/* HEADER BANNER */}
-      <div className="p-4 bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 border border-slate-800 rounded-2xl shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
+      <div className="p-4 bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 border border-slate-800 rounded-2xl shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3 min-w-0">
           <div className="p-3 bg-blue-600/20 border border-blue-500/30 rounded-2xl text-blue-400 shrink-0">
             <MessageSquare className="w-6 h-6" />
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-xl font-bold text-white tracking-tight">Media Chat & Pesan SIAKAD</h2>
-              <span className="px-2.5 py-0.5 bg-emerald-950 text-emerald-300 rounded-full text-[10px] font-bold border border-emerald-800/80 flex items-center gap-1">
-                <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-ping" /> Live Terhubung
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h2 className="text-lg md:text-xl font-bold text-white tracking-tight truncate">Media Chat & Pesan SIAKAD</h2>
+              <span className="px-2.5 py-0.5 bg-emerald-950 text-emerald-300 rounded-full text-[10px] font-bold border border-emerald-800/80 flex items-center gap-1 shrink-0">
+                <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-ping" /> Realtime Terhubung
               </span>
             </div>
-            <p className="text-xs text-slate-300 mt-0.5">
-              Komunikasi langsung antar akun terhubung (Wali Kelas, Guru, Orang Tua/Wali, Siswa, dan Admin Operasional).
+            <p className="text-xs text-slate-300 mt-0.5 leading-snug">
+              Komunikasi langsung antar akun terhubung (Wali Kelas, Guru, Orang Tua/Wali, Siswa, dan Admin).
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2.5 px-3 py-1.5 bg-slate-800/80 border border-slate-700/80 rounded-xl text-xs">
-            <img src={currentUser.avatarUrl} alt={currentUser.name} className="w-6 h-6 rounded-full object-cover border border-amber-400" />
-            <div>
-              <span className="text-[10px] text-slate-400 block leading-tight">Pengguna Aktif:</span>
-              <strong className="text-white text-xs block leading-tight truncate max-w-[180px]">{currentUser.name}</strong>
+        <div className="flex items-center gap-2.5 shrink-0 justify-between sm:justify-end">
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-800/80 border border-slate-700/80 rounded-xl text-xs max-w-[200px] min-w-0">
+            <img src={currentUser.avatarUrl} alt={currentUser.name} className="w-6 h-6 rounded-full object-cover border border-amber-400 shrink-0" />
+            <div className="min-w-0">
+              <span className="text-[10px] text-slate-400 block leading-tight">Pengguna:</span>
+              <strong className="text-white text-xs block leading-tight truncate">{currentUser.name}</strong>
             </div>
           </div>
           <button
@@ -341,7 +353,7 @@ export const ChatModule: React.FC<ChatModuleProps> = ({
               setShowNewChatModal(true);
               setIsCreatingGroup(false);
             }}
-            className="px-3.5 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-xl shadow-lg shadow-blue-600/30 flex items-center gap-1.5 transition shrink-0"
+            className="px-3.5 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-xl shadow-lg shadow-blue-600/30 flex items-center gap-1.5 transition shrink-0 whitespace-nowrap"
           >
             <Plus className="w-4 h-4" /> Pesan Baru
           </button>
@@ -349,13 +361,15 @@ export const ChatModule: React.FC<ChatModuleProps> = ({
       </div>
 
       {/* MAIN CHAT CONTAINER */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden grid grid-cols-1 lg:grid-cols-12 min-h-[620px] max-h-[720px]">
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden grid grid-cols-1 lg:grid-cols-12 h-[600px] md:h-[660px]">
         
         {/* LEFT SIDEBAR: CONVERSATIONS LIST */}
-        <div className="lg:col-span-4 border-r border-slate-800 flex flex-col bg-slate-900/90">
+        <div className={`lg:col-span-4 border-r border-slate-800 flex flex-col bg-slate-900/90 h-full ${
+          showMobileChatView ? 'hidden lg:flex' : 'flex'
+        }`}>
           
           {/* SEARCH & FILTERS */}
-          <div className="p-3 border-b border-slate-800 space-y-2 bg-slate-900">
+          <div className="p-3 border-b border-slate-800 space-y-2 bg-slate-900 shrink-0">
             <div className="relative">
               <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
               <input
@@ -371,7 +385,7 @@ export const ChatModule: React.FC<ChatModuleProps> = ({
             <div className="flex items-center justify-between gap-1 bg-slate-800/60 p-1 rounded-xl border border-slate-800 text-[11px]">
               <button
                 onClick={() => setChatTypeFilter('all')}
-                className={`flex-1 py-1 rounded-lg font-semibold transition ${
+                className={`flex-1 py-1 rounded-lg font-semibold transition text-center truncate ${
                   chatTypeFilter === 'all' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-white'
                 }`}
               >
@@ -379,7 +393,7 @@ export const ChatModule: React.FC<ChatModuleProps> = ({
               </button>
               <button
                 onClick={() => setChatTypeFilter('direct')}
-                className={`flex-1 py-1 rounded-lg font-semibold transition ${
+                className={`flex-1 py-1 rounded-lg font-semibold transition text-center truncate ${
                   chatTypeFilter === 'direct' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-white'
                 }`}
               >
@@ -387,7 +401,7 @@ export const ChatModule: React.FC<ChatModuleProps> = ({
               </button>
               <button
                 onClick={() => setChatTypeFilter('group')}
-                className={`flex-1 py-1 rounded-lg font-semibold transition ${
+                className={`flex-1 py-1 rounded-lg font-semibold transition text-center truncate ${
                   chatTypeFilter === 'group' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-white'
                 }`}
               >
@@ -397,14 +411,14 @@ export const ChatModule: React.FC<ChatModuleProps> = ({
 
             {/* ROLE FILTER */}
             <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-[10px] scrollbar-none">
-              <span className="text-slate-500 font-medium shrink-0 flex items-center gap-1">
+              <span className="text-slate-500 font-medium shrink-0 flex items-center gap-1 whitespace-nowrap">
                 <Filter className="w-3 h-3" /> Peran:
               </span>
               {['Semua', 'teacher', 'parent', 'student', 'admin'].map(r => (
                 <button
                   key={r}
                   onClick={() => setRoleFilter(r)}
-                  className={`px-2 py-0.5 rounded-md font-semibold shrink-0 transition ${
+                  className={`px-2 py-0.5 rounded-md font-semibold shrink-0 transition whitespace-nowrap ${
                     roleFilter === r
                       ? 'bg-slate-700 text-amber-300 border border-amber-400/40'
                       : 'bg-slate-800/80 text-slate-400 hover:text-slate-200'
@@ -446,7 +460,10 @@ export const ChatModule: React.FC<ChatModuleProps> = ({
                 return (
                   <button
                     key={chat.id}
-                    onClick={() => setActiveChatId(chat.id)}
+                    onClick={() => {
+                      setActiveChatId(chat.id);
+                      setShowMobileChatView(true);
+                    }}
                     className={`w-full p-3 text-left transition flex items-start gap-3 hover:bg-slate-800/50 ${
                       isActive ? 'bg-blue-950/40 border-l-4 border-blue-500' : ''
                     }`}
@@ -463,14 +480,14 @@ export const ChatModule: React.FC<ChatModuleProps> = ({
                     </div>
 
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between mb-0.5">
-                        <h4 className="font-bold text-slate-100 text-xs truncate max-w-[150px]">{info.name}</h4>
+                      <div className="flex items-center justify-between gap-1 mb-0.5">
+                        <h4 className="font-bold text-slate-100 text-xs truncate">{info.name}</h4>
                         <span className="text-[10px] text-slate-500 shrink-0">{lastMsg?.timestamp || ''}</span>
                       </div>
 
-                      <div className="flex items-center gap-1.5 mb-1">
+                      <div className="flex items-center gap-1.5 mb-1 flex-wrap">
                         <span
-                          className={`px-1.5 py-0.2 rounded text-[9px] font-bold ${
+                          className={`px-1.5 py-0.2 rounded text-[9px] font-bold shrink-0 ${
                             info.role === 'teacher'
                               ? 'bg-amber-950 text-amber-300 border border-amber-800'
                               : info.role === 'parent'
@@ -488,7 +505,7 @@ export const ChatModule: React.FC<ChatModuleProps> = ({
                       <p className="text-[11px] text-slate-400 truncate">
                         {lastMsg ? (
                           <>
-                            {lastMsg.senderId === currentUser.id && <span className="text-blue-400">Anda: </span>}
+                            {lastMsg.senderId === currentUser.id && <span className="text-blue-400 font-semibold">Anda: </span>}
                             {lastMsg.text}
                           </>
                         ) : (
@@ -504,41 +521,52 @@ export const ChatModule: React.FC<ChatModuleProps> = ({
         </div>
 
         {/* RIGHT CHAT WINDOW */}
-        <div className="lg:col-span-8 flex flex-col bg-slate-950">
+        <div className={`lg:col-span-8 flex flex-col bg-slate-950 h-full ${
+          !showMobileChatView ? 'hidden lg:flex' : 'flex'
+        }`}>
           {activeChat ? (
             <>
               {/* CHAT WINDOW HEADER */}
               {(() => {
                 const info = getRecipientInfo(activeChat);
                 return (
-                  <div className="p-3 bg-slate-900 border-b border-slate-800 flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                      <div className="relative">
+                  <div className="p-3 bg-slate-900 border-b border-slate-800 flex items-center justify-between gap-2 shrink-0">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      {/* MOBILE BACK BUTTON */}
+                      <button
+                        onClick={() => setShowMobileChatView(false)}
+                        className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg lg:hidden shrink-0 flex items-center gap-1 text-xs font-semibold"
+                        title="Kembali ke daftar percakapan"
+                      >
+                        <ArrowLeft className="w-4 h-4" />
+                      </button>
+
+                      <div className="relative shrink-0">
                         <img
                           src={info.avatarUrl}
                           alt={info.name}
-                          className="w-10 h-10 rounded-full object-cover border border-slate-700"
+                          className="w-9 h-9 md:w-10 md:h-10 rounded-full object-cover border border-slate-700"
                         />
                         {info.isOnline && (
-                          <span className="w-3 h-3 bg-emerald-500 border-2 border-slate-900 rounded-full absolute bottom-0 right-0" />
+                          <span className="w-2.5 h-2.5 md:w-3 md:h-3 bg-emerald-500 border-2 border-slate-900 rounded-full absolute bottom-0 right-0" />
                         )}
                       </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h3 className="font-bold text-white text-sm">{info.name}</h3>
-                          <span className="px-2 py-0.5 bg-blue-950 text-blue-300 rounded text-[10px] font-semibold border border-blue-800">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <h3 className="font-bold text-white text-xs md:text-sm truncate">{info.name}</h3>
+                          <span className="px-1.5 py-0.5 bg-blue-950 text-blue-300 rounded text-[9px] md:text-[10px] font-semibold border border-blue-800 shrink-0">
                             {info.roleBadge}
                           </span>
                         </div>
-                        <p className="text-[11px] text-slate-400 flex items-center gap-1.5 mt-0.5">
-                          <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full" />
-                          <span>{info.subtext} • Status: Terhubung SIAKAD</span>
+                        <p className="text-[10px] md:text-[11px] text-slate-400 flex items-center gap-1 truncate mt-0.5">
+                          <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full shrink-0" />
+                          <span className="truncate">{info.subtext}</span>
                         </p>
                       </div>
                     </div>
 
                     {/* CALL SIMULATION BUTTONS */}
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5 shrink-0">
                       <button
                         onClick={() => setCallModalInfo({ type: 'voice', name: info.name })}
                         className="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl transition"
@@ -559,10 +587,10 @@ export const ChatModule: React.FC<ChatModuleProps> = ({
               })()}
 
               {/* MESSAGES BODY */}
-              <div className="flex-1 p-4 overflow-y-auto space-y-3 custom-scrollbar bg-slate-950/60">
-                <div className="text-center my-2">
-                  <span className="px-3 py-1 bg-slate-800/80 text-slate-400 text-[10px] rounded-full border border-slate-700/60">
-                    🔒 Percakapan ini dilindungi Enkripsi AES-256 SIAKAD
+              <div className="flex-1 p-3 md:p-4 overflow-y-auto space-y-3 custom-scrollbar bg-slate-950/60 min-h-0">
+                <div className="text-center my-1">
+                  <span className="px-3 py-1 bg-slate-800/80 text-slate-400 text-[10px] rounded-full border border-slate-700/60 inline-block">
+                    🔒 Percakapan ini terenkripsi & tersinkronisasi real-time
                   </span>
                 </div>
 
@@ -572,18 +600,18 @@ export const ChatModule: React.FC<ChatModuleProps> = ({
                   return (
                     <div
                       key={msg.id}
-                      className={`flex items-end gap-2.5 ${isMe ? 'flex-row-reverse' : 'flex-row'}`}
+                      className={`flex items-end gap-2 ${isMe ? 'flex-row-reverse' : 'flex-row'}`}
                     >
                       {!isMe && (
                         <img
                           src={msg.senderAvatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200'}
                           alt={msg.senderName}
-                          className="w-8 h-8 rounded-full object-cover border border-slate-800 shrink-0"
+                          className="w-7 h-7 md:w-8 md:h-8 rounded-full object-cover border border-slate-800 shrink-0"
                         />
                       )}
 
                       <div
-                        className={`max-w-[80%] md:max-w-[68%] p-3 rounded-2xl shadow-md text-xs space-y-1 ${
+                        className={`max-w-[85%] sm:max-w-[75%] md:max-w-[70%] p-3 rounded-2xl shadow-md text-xs space-y-1 min-w-0 break-words ${
                           isMe
                             ? 'bg-blue-600 text-white rounded-br-none'
                             : 'bg-slate-800/90 text-slate-100 border border-slate-700/80 rounded-bl-none'
@@ -591,14 +619,14 @@ export const ChatModule: React.FC<ChatModuleProps> = ({
                       >
                         {!isMe && (
                           <div className="flex items-center gap-1.5 text-[10px] font-bold text-amber-300 border-b border-slate-700/60 pb-1 mb-1">
-                            <span>{msg.senderName}</span>
-                            <span className="px-1.5 py-0.2 bg-slate-900/80 rounded text-[9px] text-slate-300">
+                            <span className="truncate">{msg.senderName}</span>
+                            <span className="px-1.5 py-0.2 bg-slate-900/80 rounded text-[9px] text-slate-300 shrink-0">
                               {msg.senderRole}
                             </span>
                           </div>
                         )}
 
-                        <p className="leading-relaxed whitespace-pre-wrap">{msg.text}</p>
+                        <p className="leading-relaxed whitespace-pre-wrap break-words">{msg.text}</p>
 
                         {/* ATTACHMENT DISPLAY */}
                         {msg.attachmentUrl && (
@@ -607,17 +635,17 @@ export const ChatModule: React.FC<ChatModuleProps> = ({
                               <img
                                 src={msg.attachmentUrl}
                                 alt="Attachment"
-                                className="max-h-48 rounded-lg object-cover border border-slate-700"
+                                className="max-h-40 rounded-lg object-cover border border-slate-700"
                               />
                             ) : (
                               <a
                                 href={msg.attachmentUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="inline-flex items-center gap-2 p-2 bg-slate-900/60 rounded-lg text-blue-200 hover:text-white border border-slate-700 text-[11px]"
+                                className="inline-flex items-center gap-2 p-2 bg-slate-900/60 rounded-lg text-blue-200 hover:text-white border border-slate-700 text-[11px] max-w-full min-w-0"
                               >
-                                <FileText className="w-4 h-4 text-blue-400" />
-                                <span className="truncate max-w-[180px]">{msg.attachmentName || 'Lampiran Berkas'}</span>
+                                <FileText className="w-4 h-4 text-blue-400 shrink-0" />
+                                <span className="truncate">{msg.attachmentName || 'Lampiran Berkas'}</span>
                               </a>
                             )}
                           </div>
@@ -629,7 +657,7 @@ export const ChatModule: React.FC<ChatModuleProps> = ({
                           }`}
                         >
                           <span>{msg.timestamp}</span>
-                          {isMe && <CheckCheck className="w-3.5 h-3.5 text-blue-200" />}
+                          {isMe && <CheckCheck className="w-3.5 h-3.5 text-blue-200 shrink-0" />}
                         </div>
                       </div>
                     </div>
@@ -639,36 +667,36 @@ export const ChatModule: React.FC<ChatModuleProps> = ({
               </div>
 
               {/* QUICK PRESET BUTTONS */}
-              <div className="px-4 py-2 bg-slate-900/90 border-t border-slate-800 flex items-center gap-2 overflow-x-auto scrollbar-none text-[10px]">
-                <span className="text-slate-500 font-bold shrink-0 flex items-center gap-1">
-                  <Sparkles className="w-3 h-3 text-amber-400" /> Template Pesan:
+              <div className="px-3 py-1.5 bg-slate-900/90 border-t border-slate-800 flex items-center gap-1.5 overflow-x-auto scrollbar-none text-[10px] shrink-0">
+                <span className="text-slate-500 font-bold shrink-0 flex items-center gap-1 whitespace-nowrap">
+                  <Sparkles className="w-3 h-3 text-amber-400" /> Template:
                 </span>
                 {quickPresets.map((preset, idx) => (
                   <button
                     key={idx}
                     onClick={() => handleSendMessage(preset)}
-                    className="px-2.5 py-1 bg-slate-800 hover:bg-blue-900/40 text-slate-300 hover:text-blue-300 border border-slate-700/80 rounded-full shrink-0 transition"
+                    className="px-2 py-1 bg-slate-800 hover:bg-blue-900/40 text-slate-300 hover:text-blue-300 border border-slate-700/80 rounded-full shrink-0 transition whitespace-nowrap max-w-[200px] truncate"
                   >
-                    "{preset.slice(0, 32)}..."
+                    "{preset}"
                   </button>
                 ))}
               </div>
 
               {/* ATTACHMENT PREVIEW IF ANY */}
               {attachment && (
-                <div className="px-4 py-2 bg-slate-900 border-t border-slate-800 flex items-center justify-between text-xs text-blue-300">
-                  <div className="flex items-center gap-2">
-                    <Paperclip className="w-4 h-4 text-blue-400" />
-                    <span>Lampiran: <strong>{attachment.name}</strong></span>
+                <div className="px-3 py-1.5 bg-slate-900 border-t border-slate-800 flex items-center justify-between text-xs text-blue-300 shrink-0">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Paperclip className="w-4 h-4 text-blue-400 shrink-0" />
+                    <span className="truncate">Lampiran: <strong>{attachment.name}</strong></span>
                   </div>
-                  <button onClick={() => setAttachment(null)} className="text-slate-400 hover:text-white">
+                  <button onClick={() => setAttachment(null)} className="text-slate-400 hover:text-white shrink-0 ml-2">
                     <X className="w-4 h-4" />
                   </button>
                 </div>
               )}
 
               {/* INPUT AREA */}
-              <div className="p-3 bg-slate-900 border-t border-slate-800 flex items-center gap-2">
+              <div className="p-2.5 bg-slate-900 border-t border-slate-800 flex items-center gap-2 shrink-0">
                 <label
                   className="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl cursor-pointer transition shrink-0"
                   title="Lampirkan Gambar atau Berkas"
@@ -699,13 +727,13 @@ export const ChatModule: React.FC<ChatModuleProps> = ({
                     if (e.key === 'Enter') handleSendMessage();
                   }}
                   placeholder="Ketik pesan Anda..."
-                  className="flex-1 p-2.5 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                  className="flex-1 min-w-0 p-2.5 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
                 />
 
                 <button
                   onClick={() => handleSendMessage()}
                   disabled={!messageText.trim() && !attachment}
-                  className="p-2.5 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-800 disabled:text-slate-600 text-white rounded-xl font-semibold shadow-lg shadow-blue-600/30 transition shrink-0"
+                  className="p-2.5 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-800 disabled:text-slate-600 text-white rounded-xl font-semibold shadow-lg shadow-blue-600/30 transition shrink-0 flex items-center justify-center"
                 >
                   <Send className="w-4 h-4" />
                 </button>
@@ -726,7 +754,7 @@ export const ChatModule: React.FC<ChatModuleProps> = ({
       {/* NEW CHAT MODAL */}
       {showNewChatModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-          <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-lg w-full p-6 text-slate-100 shadow-2xl space-y-4 relative">
+          <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-lg w-full p-5 md:p-6 text-slate-100 shadow-2xl space-y-4 relative max-h-[90vh] overflow-y-auto">
             <button
               onClick={() => setShowNewChatModal(false)}
               className="absolute top-4 right-4 text-slate-400 hover:text-white"
@@ -735,7 +763,7 @@ export const ChatModule: React.FC<ChatModuleProps> = ({
             </button>
 
             <div className="flex items-center gap-2 pb-3 border-b border-slate-800">
-              <MessageSquare className="w-5 h-5 text-blue-400" />
+              <MessageSquare className="w-5 h-5 text-blue-400 shrink-0" />
               <div>
                 <h3 className="font-bold text-base text-white">Mulai Pesan Baru / Obrolan</h3>
                 <p className="text-xs text-slate-400">Pilih akun terhubung dalam SIAKAD Yayasan</p>
@@ -746,7 +774,7 @@ export const ChatModule: React.FC<ChatModuleProps> = ({
             <div className="flex items-center gap-2 bg-slate-800 p-1 rounded-xl text-xs font-semibold">
               <button
                 onClick={() => setIsCreatingGroup(false)}
-                className={`flex-1 py-1.5 rounded-lg transition ${
+                className={`flex-1 py-1.5 rounded-lg transition text-center truncate ${
                   !isCreatingGroup ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-white'
                 }`}
               >
@@ -754,7 +782,7 @@ export const ChatModule: React.FC<ChatModuleProps> = ({
               </button>
               <button
                 onClick={() => setIsCreatingGroup(true)}
-                className={`flex-1 py-1.5 rounded-lg transition ${
+                className={`flex-1 py-1.5 rounded-lg transition text-center truncate ${
                   isCreatingGroup ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-white'
                 }`}
               >
@@ -773,17 +801,17 @@ export const ChatModule: React.FC<ChatModuleProps> = ({
                       <div
                         key={u.id}
                         onClick={() => handleStartDirectChat(u)}
-                        className="p-2.5 flex items-center justify-between hover:bg-slate-800/80 rounded-lg cursor-pointer transition"
+                        className="p-2.5 flex items-center justify-between hover:bg-slate-800/80 rounded-lg cursor-pointer transition gap-2"
                       >
-                        <div className="flex items-center gap-2.5">
-                          <img src={u.avatarUrl} alt={u.name} className="w-8 h-8 rounded-full object-cover border border-slate-700" />
-                          <div>
-                            <h5 className="font-bold text-xs text-slate-100">{u.name}</h5>
-                            <span className="text-[10px] text-slate-400">{u.email}</span>
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <img src={u.avatarUrl} alt={u.name} className="w-8 h-8 rounded-full object-cover border border-slate-700 shrink-0" />
+                          <div className="min-w-0">
+                            <h5 className="font-bold text-xs text-slate-100 truncate">{u.name}</h5>
+                            <span className="text-[10px] text-slate-400 truncate block">{u.email}</span>
                           </div>
                         </div>
                         <span
-                          className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                          className={`px-2 py-0.5 rounded text-[10px] font-bold shrink-0 ${
                             u.role === 'teacher'
                               ? 'bg-amber-950 text-amber-300'
                               : u.role === 'parent'
@@ -830,15 +858,15 @@ export const ChatModule: React.FC<ChatModuleProps> = ({
                                 setSelectedGroupMembers([...selectedGroupMembers, u.id]);
                               }
                             }}
-                            className={`p-2 rounded-lg flex items-center justify-between cursor-pointer border transition ${
+                            className={`p-2 rounded-lg flex items-center justify-between cursor-pointer border transition gap-2 ${
                               isSelected ? 'bg-blue-950/80 border-blue-500' : 'bg-slate-900 border-slate-800'
                             }`}
                           >
-                            <div className="flex items-center gap-2">
-                              <img src={u.avatarUrl} alt={u.name} className="w-7 h-7 rounded-full object-cover" />
-                              <span className="font-semibold text-slate-200">{u.name} ({u.role})</span>
+                            <div className="flex items-center gap-2 min-w-0">
+                              <img src={u.avatarUrl} alt={u.name} className="w-7 h-7 rounded-full object-cover shrink-0" />
+                              <span className="font-semibold text-slate-200 truncate">{u.name} ({u.role})</span>
                             </div>
-                            <CheckCircle2 className={`w-4 h-4 ${isSelected ? 'text-blue-400' : 'text-slate-600'}`} />
+                            <CheckCircle2 className={`w-4 h-4 shrink-0 ${isSelected ? 'text-blue-400' : 'text-slate-600'}`} />
                           </div>
                         );
                       })}

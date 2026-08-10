@@ -192,10 +192,37 @@ export default function App() {
     return initialNotifications;
   });
 
-  const [dknGrades, setDknGrades] = useState<DKNRecord[]>(initialDKN);
-  const [characterAssessments, setCharacterAssessments] = useState<Record<string, CharacterAssessment[]>>(initialCharacterAssessments);
-  const [spiritualJourney, setSpiritualJourney] = useState<Record<string, SpiritualJourneyRecord>>(initialSpiritualJourney);
-  const [conversations, setConversations] = useState<ChatConversation[]>(initialChatConversations);
+  const [dknGrades, setDknGrades] = useState<DKNRecord[]>(() => {
+    try {
+      const saved = localStorage.getItem('siakad_dkn');
+      if (saved) return JSON.parse(saved);
+    } catch (err) {}
+    return initialDKN;
+  });
+
+  const [characterAssessments, setCharacterAssessments] = useState<Record<string, CharacterAssessment[]>>(() => {
+    try {
+      const saved = localStorage.getItem('siakad_character');
+      if (saved) return JSON.parse(saved);
+    } catch (err) {}
+    return initialCharacterAssessments;
+  });
+
+  const [spiritualJourney, setSpiritualJourney] = useState<Record<string, SpiritualJourneyRecord>>(() => {
+    try {
+      const saved = localStorage.getItem('siakad_spiritual');
+      if (saved) return JSON.parse(saved);
+    } catch (err) {}
+    return initialSpiritualJourney;
+  });
+
+  const [conversations, setConversations] = useState<ChatConversation[]>(() => {
+    try {
+      const saved = localStorage.getItem('siakad_conversations');
+      if (saved) return JSON.parse(saved);
+    } catch (err) {}
+    return initialChatConversations;
+  });
 
   const [activeTab, setActiveTab] = useState<ActiveTab>('dashboard');
   const [activeLevel, setActiveLevel] = useState<EducationLevel | 'Semua'>('Semua');
@@ -274,6 +301,34 @@ export default function App() {
     } catch (err) {}
   }, [notifications]);
 
+  useEffect(() => {
+    try {
+      localStorage.setItem('siakad_conversations', JSON.stringify(conversations));
+      broadcastStateSync('SYNC_CONVERSATIONS', conversations);
+    } catch (err) {}
+  }, [conversations]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('siakad_dkn', JSON.stringify(dknGrades));
+      broadcastStateSync('SYNC_DKN', dknGrades);
+    } catch (err) {}
+  }, [dknGrades]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('siakad_character', JSON.stringify(characterAssessments));
+      broadcastStateSync('SYNC_CHARACTER', characterAssessments);
+    } catch (err) {}
+  }, [characterAssessments]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('siakad_spiritual', JSON.stringify(spiritualJourney));
+      broadcastStateSync('SYNC_SPIRITUAL', spiritualJourney);
+    } catch (err) {}
+  }, [spiritualJourney]);
+
   // Realtime BroadcastChannel & Storage Event Multi-Tab Listener
   useEffect(() => {
     let channel: BroadcastChannel | null = null;
@@ -292,6 +347,10 @@ export default function App() {
         else if (type === 'SYNC_PPDB') setPpdb(data);
         else if (type === 'SYNC_EVENTS') setEvents(data);
         else if (type === 'SYNC_NOTIFICATIONS') setNotifications(data);
+        else if (type === 'SYNC_CONVERSATIONS') setConversations(data);
+        else if (type === 'SYNC_DKN') setDknGrades(data);
+        else if (type === 'SYNC_CHARACTER') setCharacterAssessments(data);
+        else if (type === 'SYNC_SPIRITUAL') setSpiritualJourney(data);
       };
     } catch (err) {}
 
@@ -309,6 +368,10 @@ export default function App() {
         else if (e.key === 'siakad_ppdb') setPpdb(parsed);
         else if (e.key === 'siakad_events') setEvents(parsed);
         else if (e.key === 'siakad_notifications') setNotifications(parsed);
+        else if (e.key === 'siakad_conversations') setConversations(parsed);
+        else if (e.key === 'siakad_dkn') setDknGrades(parsed);
+        else if (e.key === 'siakad_character') setCharacterAssessments(parsed);
+        else if (e.key === 'siakad_spiritual') setSpiritualJourney(parsed);
       } catch (err) {}
     };
 
