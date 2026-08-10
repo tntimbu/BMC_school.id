@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { QRCodeCanvas } from 'qrcode.react';
 import {
   QrCode,
@@ -12,7 +12,10 @@ import {
   Calendar,
   X,
   Sparkles,
-  Zap
+  Zap,
+  Camera,
+  CameraOff,
+  Video
 } from 'lucide-react';
 import { Student, AttendanceRecord, UserProfile, SchoolSettings } from '../types';
 import { generateAttendanceReportPDF } from '../lib/pdfExporter';
@@ -40,6 +43,41 @@ export const QRAttendance: React.FC<QRAttendanceProps> = ({
   const [scanning, setScanning] = useState<boolean>(false);
   const [scanSuccessResult, setScanSuccessResult] = useState<{ record: AttendanceRecord, alertTriggered: boolean } | null>(null);
 
+  const [isCameraActive, setIsCameraActive] = useState<boolean>(false);
+  const [cameraError, setCameraError] = useState<string | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+
+  const startCamera = async () => {
+    setCameraError(null);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment', width: { ideal: 640 }, height: { ideal: 480 } }
+      });
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.play();
+      }
+      setIsCameraActive(true);
+    } catch (err) {
+      setCameraError('Kamera tidak dapat diakses atau izin ditolak. Anda dapat tetap menggunakan simulator scan manual di bawah.');
+      setIsCameraActive(false);
+    }
+  };
+
+  const stopCamera = () => {
+    if (videoRef.current && videoRef.current.srcObject) {
+      const stream = videoRef.current.srcObject as MediaStream;
+      stream.getTracks().forEach(track => track.stop());
+      videoRef.current.srcObject = null;
+    }
+    setIsCameraActive(false);
+  };
+
+  useEffect(() => {
+    return () => {
+      stopCamera();
+    };
+  }, []);
   const [dateFilter, setDateFilter] = useState<string>('');
   const [classFilter, setClassFilter] = useState<string>('Semua');
 
@@ -120,16 +158,76 @@ export const QRAttendance: React.FC<QRAttendanceProps> = ({
       {/* Main Scanner Section & Student Cards Generator */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        {/* Scanner Simulation Panel */}
+        {/* Scanner Simulation Panel & Camera Scanner */}
         <div className="lg:col-span-2 bg-slate-900 p-5 rounded-xl border border-slate-800 space-y-4">
           <div className="flex items-center justify-between pb-3 border-b border-slate-800">
             <h3 className="text-sm font-bold text-white flex items-center gap-2">
-              <Scan className="w-4 h-4 text-indigo-400" /> Simulator Mesin Presensi QR Code
+              <Scan className="w-4 h-4 text-indigo-400" /> Scanner Barcode & Kartu Presensi QR
             </h3>
-            <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full font-bold uppercase flex items-center gap-1">
-              <Zap className="w-3 h-3 text-emerald-400" /> Live Terminal
-            </span>
+            <div className="flex items-center gap-2">
+              {!isCameraActive ? (
+                <button
+                  onClick={startCamera}
+                  className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 transition shadow-sm"
+                  id="btn-open-camera-scanner"
+                >
+                  <Camera className="w-3.5 h-3.5" /> Buka Kamera Device
+                </button>
+              ) : (
+                <button
+                  onClick={stopCamera}
+                  className="px-3 py-1.5 bg-rose-600 hover:bg-rose-500 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 transition shadow-sm"
+                  id="btn-close-camera-scanner"
+                >
+                  <CameraOff className="w-3.5 h-3.5" /> Tutup Kamera
+                </button>
+              )}
+            </div>
           </div>
+
+          {/* Live Video Camera Feed */}
+          {isCameraActive && (
+            <div className="p-4 bg-slate-950 rounded-2xl border border-indigo-500/40 relative overflow-hidden flex flex-col items-center justify-center space-y-3">
+              <div className="relative w-full max-w-md h-64 bg-black rounded-xl overflow-hidden border border-slate-800 flex items-center justify-center">
+                <video
+                  ref={videoRef}
+                  className="w-full h-full object-cover"
+                  playsInline
+                  muted
+                />
+                
+                {/* Scanner Target Crosshair Overlay */}
+                <div className="absolute inset-0 border-2 border-dashed border-indigo-400/70 m-8 rounded-2xl pointer-events-none flex items-center justify-center animate-pulse">
+                  <div className="w-full h-0.5 bg-rose-500/80 shadow-lg shadow-rose-500/50" />
+                </div>
+              </div>
+
+              <div className="text-center space-y-1">
+                <p className="text-xs text-indigo-300 font-semibold flex items-center justify-center gap-1.5">
+                  <Video className="w-4 h-4 text-indigo-400 animate-spin" /> Kamera Aktif • Arahkan Barcode / QR Kartu Siswa ke Kotak Pemindai
+                </p>
+                <p className="text-[10px] text-slate-400">
+                  Sistem akan memverifikasi identitas siswa & mengirimkan push alert ke wali murid secara otomatis.
+                </p>
+              </div>
+
+              <button
+                onClick={handleSimulateScan}
+                disabled={scanning}
+                className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-emerald-600/30 flex items-center gap-2 transition"
+              >
+                <Scan className="w-4 h-4" />
+                <span>{scanning ? 'Memverifikasi...' : 'Tangkap & Scan Kartu Terdeteksi'}</span>
+              </button>
+            </div>
+          )}
+
+          {cameraError && (
+            <div className="p-3 bg-amber-950/40 border border-amber-800/60 rounded-xl text-xs text-amber-200 flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+              <span>{cameraError}</span>
+            </div>
+          )}
 
           <div className="p-4 bg-slate-950 rounded-xl border border-slate-800 text-xs space-y-3">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

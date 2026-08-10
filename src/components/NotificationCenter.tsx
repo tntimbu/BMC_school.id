@@ -1,12 +1,18 @@
 import React from 'react';
-import { Bell, Mail, Smartphone, AlertTriangle, CheckCircle2, Clock } from 'lucide-react';
+import { Bell, Mail, Smartphone, AlertTriangle, CheckCircle2, Clock, Trash2 } from 'lucide-react';
 import { NotificationLog } from '../types';
 
 interface NotificationCenterProps {
   notifications: NotificationLog[];
+  onDeleteNotification?: (id: string) => void;
+  onClearAllNotifications?: () => void;
 }
 
-export const NotificationCenter: React.FC<NotificationCenterProps> = ({ notifications }) => {
+export const NotificationCenter: React.FC<NotificationCenterProps> = ({
+  notifications,
+  onDeleteNotification,
+  onClearAllNotifications
+}) => {
   return (
     <div className="space-y-6">
       
@@ -21,6 +27,19 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ notifica
             Log riwayat pengiriman email pengingat tenggat waktu, presensi QR Code, dan peringatan keterlambatan.
           </p>
         </div>
+
+        {notifications.length > 0 && onClearAllNotifications && (
+          <button
+            onClick={() => {
+              if (confirm('Kosongkan semua riwayat log notifikasi?')) {
+                onClearAllNotifications();
+              }
+            }}
+            className="px-3.5 py-2 bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 rounded-xl text-xs font-semibold border border-rose-500/30 flex items-center gap-2 transition shrink-0"
+          >
+            <Trash2 className="w-4 h-4 text-rose-400" /> Bersihkan Semua Log
+          </button>
+        )}
       </div>
 
       {/* Notifications Table Log */}
@@ -35,12 +54,13 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ notifica
                 <th className="p-3.5">Subjek Notifikasi</th>
                 <th className="p-3.5">Pemicu Sistem</th>
                 <th className="p-3.5 text-center">Status</th>
+                <th className="p-3.5 text-center">Aksi</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/60">
               {notifications.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="p-8 text-center text-slate-400">
+                  <td colSpan={7} className="p-8 text-center text-slate-400">
                     Belum ada riwayat notifikasi.
                   </td>
                 </tr>
@@ -71,6 +91,17 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ notifica
                       <span className="px-2.5 py-1 rounded bg-emerald-500/20 text-emerald-300 font-bold text-[10px] uppercase flex items-center justify-center gap-1">
                         <CheckCircle2 className="w-3 h-3" /> {n.status}
                       </span>
+                    </td>
+                    <td className="p-3.5 text-center">
+                      {onDeleteNotification && (
+                        <button
+                          onClick={() => onDeleteNotification(n.id)}
+                          className="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded transition"
+                          title="Hapus Log Notifikasi"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))

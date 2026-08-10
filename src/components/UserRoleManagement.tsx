@@ -24,7 +24,8 @@ import {
   EyeOff,
   Save,
   RefreshCw,
-  Mail
+  Mail,
+  Trash2
 } from 'lucide-react';
 import { UserProfile, UserRole, SchoolSettings, EducationLevel } from '../types';
 
@@ -37,6 +38,7 @@ interface UserRoleManagementProps {
   onToggleBlockUnit?: (target: EducationLevel | 'Yayasan', newStatus: 'Aktif' | 'Nonaktif' | 'Diblokir') => void;
   onAddUser?: (newUser: UserProfile) => void;
   onUpdateUser?: (updatedUser: UserProfile) => void;
+  onDeleteUser?: (userId: string) => void;
 }
 
 interface RolePermissionRule {
@@ -56,7 +58,8 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
   onToggleBlockUser,
   onToggleBlockUnit,
   onAddUser,
-  onUpdateUser
+  onUpdateUser,
+  onDeleteUser
 }) => {
   const isSuperadmin = currentUser?.role === 'superadmin';
   const isAdminOrSuper = currentUser?.role === 'superadmin' || currentUser?.role === 'admin';
@@ -540,17 +543,17 @@ export const UserRoleManagement: React.FC<UserRoleManagementProps> = ({
                       <RefreshCw className="w-3 h-3" /> Reset
                     </button>
 
-                    {isSuperadmin && u.role !== 'superadmin' && (
+                    {isAdminOrSuper && u.role !== 'superadmin' && onDeleteUser && (
                       <button
-                        onClick={() => onToggleBlockUser && onToggleBlockUser(u.id, isUserBlocked ? 'Aktif' : 'Diblokir')}
-                        className={`p-1.5 rounded-lg text-[10px] font-bold flex items-center justify-center transition ${
-                          isUserBlocked
-                            ? 'bg-emerald-600/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-600/30'
-                            : 'bg-rose-600/20 text-rose-300 border border-rose-500/30 hover:bg-rose-600/30'
-                        }`}
-                        title={isUserBlocked ? 'Aktifkan Akun' : 'Blokir Akun'}
+                        onClick={() => {
+                          if (confirm(`Apakah Anda yakin ingin MENGHAPUS akun pengguna "${u.name}" (${u.email})?`)) {
+                            onDeleteUser(u.id);
+                          }
+                        }}
+                        className="p-1.5 bg-rose-600/20 hover:bg-rose-600/30 text-rose-300 border border-rose-500/30 rounded-lg text-[10px] font-bold flex items-center justify-center transition"
+                        title="Hapus Akun Pengguna"
                       >
-                        <Ban className="w-3.5 h-3.5" />
+                        <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     )}
                   </div>

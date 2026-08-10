@@ -239,7 +239,7 @@ export default function App() {
   useEffect(() => {
     const unsubSettings = subscribeToSyncDoc<SchoolSettings>('settings', (data) => {
       const json = JSON.stringify(data);
-      if (json) {
+      if (json && json !== lastRemoteHashRef.current['settings']) {
         lastRemoteHashRef.current['settings'] = json;
         isRemoteInitializedRef.current['settings'] = true;
         setSettings(data);
@@ -252,7 +252,7 @@ export default function App() {
 
     const unsubUsers = subscribeToSyncDoc<UserProfile[]>('users', (data) => {
       const json = JSON.stringify(data);
-      if (json) {
+      if (json && json !== lastRemoteHashRef.current['users']) {
         lastRemoteHashRef.current['users'] = json;
         isRemoteInitializedRef.current['users'] = true;
         setUsers(data);
@@ -265,7 +265,7 @@ export default function App() {
 
     const unsubStudents = subscribeToSyncDoc<Student[]>('students', (data) => {
       const json = JSON.stringify(data);
-      if (json) {
+      if (json && json !== lastRemoteHashRef.current['students']) {
         lastRemoteHashRef.current['students'] = json;
         isRemoteInitializedRef.current['students'] = true;
         setStudents(data);
@@ -278,7 +278,7 @@ export default function App() {
 
     const unsubGrades = subscribeToSyncDoc<Grade[]>('grades', (data) => {
       const json = JSON.stringify(data);
-      if (json) {
+      if (json && json !== lastRemoteHashRef.current['grades']) {
         lastRemoteHashRef.current['grades'] = json;
         isRemoteInitializedRef.current['grades'] = true;
         setGrades(data);
@@ -291,7 +291,7 @@ export default function App() {
 
     const unsubAttendance = subscribeToSyncDoc<AttendanceRecord[]>('attendance', (data) => {
       const json = JSON.stringify(data);
-      if (json) {
+      if (json && json !== lastRemoteHashRef.current['attendance']) {
         lastRemoteHashRef.current['attendance'] = json;
         isRemoteInitializedRef.current['attendance'] = true;
         setAttendance(data);
@@ -304,7 +304,7 @@ export default function App() {
 
     const unsubTuition = subscribeToSyncDoc<TuitionRecord[]>('tuition', (data) => {
       const json = JSON.stringify(data);
-      if (json) {
+      if (json && json !== lastRemoteHashRef.current['tuition']) {
         lastRemoteHashRef.current['tuition'] = json;
         isRemoteInitializedRef.current['tuition'] = true;
         setTuition(data);
@@ -317,7 +317,7 @@ export default function App() {
 
     const unsubAnnouncements = subscribeToSyncDoc<Announcement[]>('announcements', (data) => {
       const json = JSON.stringify(data);
-      if (json) {
+      if (json && json !== lastRemoteHashRef.current['announcements']) {
         lastRemoteHashRef.current['announcements'] = json;
         isRemoteInitializedRef.current['announcements'] = true;
         setAnnouncements(data);
@@ -330,7 +330,7 @@ export default function App() {
 
     const unsubPPDB = subscribeToSyncDoc<PPDBApplication[]>('ppdb', (data) => {
       const json = JSON.stringify(data);
-      if (json) {
+      if (json && json !== lastRemoteHashRef.current['ppdb']) {
         lastRemoteHashRef.current['ppdb'] = json;
         isRemoteInitializedRef.current['ppdb'] = true;
         setPpdb(data);
@@ -343,7 +343,7 @@ export default function App() {
 
     const unsubEvents = subscribeToSyncDoc<CalendarEvent[]>('events', (data) => {
       const json = JSON.stringify(data);
-      if (json) {
+      if (json && json !== lastRemoteHashRef.current['events']) {
         lastRemoteHashRef.current['events'] = json;
         isRemoteInitializedRef.current['events'] = true;
         setEvents(data);
@@ -356,7 +356,7 @@ export default function App() {
 
     const unsubNotifications = subscribeToSyncDoc<NotificationLog[]>('notifications', (data) => {
       const json = JSON.stringify(data);
-      if (json) {
+      if (json && json !== lastRemoteHashRef.current['notifications']) {
         lastRemoteHashRef.current['notifications'] = json;
         isRemoteInitializedRef.current['notifications'] = true;
         setNotifications(data);
@@ -983,6 +983,26 @@ export default function App() {
     setStudents(prev => prev.filter(s => s.id !== studentId));
   };
 
+  const handleDeleteUser = (userId: string) => {
+    setUsers(prev => prev.filter(u => u.id !== userId));
+  };
+
+  const handleDeleteAnnouncement = (id: string) => {
+    setAnnouncements(prev => prev.filter(a => a.id !== id));
+  };
+
+  const handleDeleteEvent = (id: string) => {
+    setEvents(prev => prev.filter(e => e.id !== id));
+  };
+
+  const handleDeleteNotification = (id: string) => {
+    setNotifications(prev => prev.filter(n => n.id !== id));
+  };
+
+  const handleClearAllNotifications = () => {
+    setNotifications([]);
+  };
+
   const handleUpdateSettings = async (updated: Partial<SchoolSettings>) => {
     setSettings(prev => ({ ...prev, ...updated }));
   };
@@ -1220,6 +1240,7 @@ export default function App() {
               announcements={activeLevel === 'Semua' ? announcements : announcements.filter(a => a.educationLevel === 'Semua' || a.educationLevel === activeLevel)}
               currentUser={currentUser}
               onAddAnnouncement={handleAddAnnouncement}
+              onDeleteAnnouncement={handleDeleteAnnouncement}
             />
           )}
 
@@ -1228,6 +1249,7 @@ export default function App() {
               events={activeLevel === 'Semua' ? events : events.filter(e => e.educationLevel === 'Semua' || e.educationLevel === activeLevel)}
               currentUser={currentUser}
               onAddEvent={handleAddCalendarEvent}
+              onDeleteEvent={handleDeleteEvent}
             />
           )}
 
@@ -1241,7 +1263,11 @@ export default function App() {
           )}
 
           {activeTab === 'notifications' && (
-            <NotificationCenter notifications={notifications} />
+            <NotificationCenter
+              notifications={notifications}
+              onDeleteNotification={handleDeleteNotification}
+              onClearAllNotifications={handleClearAllNotifications}
+            />
           )}
 
           {activeTab === 'roles' && (
@@ -1254,6 +1280,7 @@ export default function App() {
               onToggleBlockUnit={handleToggleBlockUnit}
               onAddUser={handleAddUser}
               onUpdateUser={handleUpdateUser}
+              onDeleteUser={handleDeleteUser}
             />
           )}
 

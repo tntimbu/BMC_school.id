@@ -28,6 +28,7 @@ import {
   Calendar,
   Plus,
   Edit,
+  User,
   Save,
   Send,
   Info,
@@ -852,6 +853,136 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
               Belum ada agenda kegiatan untuk jenjang ini.
             </div>
           )}
+        </div>
+      </div>
+
+      {/* Informasi Data Siswa & Rombel (Rombongan Belajar) Per Jenjang */}
+      <div className={`${combinedCardStyle} space-y-4`}>
+        <div className="flex items-center justify-between gap-2 flex-wrap border-b border-slate-800 pb-3">
+          <div className="min-w-0">
+            <h3 className="font-bold text-xs sm:text-sm text-white flex items-center gap-2 truncate">
+              <Users className="w-4 h-4 text-emerald-400 shrink-0" />
+              Informasi Data Siswa & Rombongan Belajar (Rombel)
+            </h3>
+            <p className="text-[10px] text-slate-400 truncate">
+              Pembagian rombel belajar per jenjang (KB-TK, SD, SMP, SMA) dan penambahan siswa baru
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {isAdminOrSuper && (
+              <button
+                onClick={() => openAddStudentModal((activeLevel === 'Semua' ? 'SMA' : activeLevel) as EducationLevel)}
+                className="px-3 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-emerald-600/30 flex items-center gap-1.5 transition shrink-0"
+                id="btn-add-student-rombel-header"
+              >
+                <Plus className="w-4 h-4" /> + Tambah Siswa Baru
+              </button>
+            )}
+            <button
+              onClick={() => setShowStudentListModal(true)}
+              className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl text-xs font-bold flex items-center gap-1.5 transition shrink-0"
+              id="btn-view-all-students"
+            >
+              <FileText className="w-4 h-4 text-blue-400" /> Direktori Siswa ({students.length})
+            </button>
+          </div>
+        </div>
+
+        {/* Rombel Cards Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
+          {([
+            { level: 'KB-TK' as EducationLevel, classes: ['KB A', 'KB B', 'TK A', 'TK B'], homerooms: ['Ibu Surtini, S.Pd', 'Ibu Mariani, S.Pd', 'Ibu Dewi, S.Pd', 'Ibu Endang, S.Pd'] },
+            { level: 'SD' as EducationLevel, classes: ['Kelas 1 A', 'Kelas 1 B', 'Kelas 2 A', 'Kelas 2 B', 'Kelas 3 A', 'Kelas 3 B', 'Kelas 4 A', 'Kelas 4 B', 'Kelas 5 A', 'Kelas 5 B', 'Kelas 6 A', 'Kelas 6 B'], homerooms: ['Pak Ahmad, S.Pd', 'Ibu Ratna, S.Pd', 'Pak Budi, S.Pd', 'Ibu Yuni, S.Pd', 'Pak Hendra, S.Pd', 'Ibu Siti, S.Pd'] },
+            { level: 'SMP' as EducationLevel, classes: ['Kelas VII A', 'Kelas VII B', 'Kelas VIII A', 'Kelas VIII B', 'Kelas IX A', 'Kelas IX B'], homerooms: ['Pak Rizki, M.Pd', 'Ibu Linda, S.Pd', 'Pak Teguh, S.Pd'] },
+            { level: 'SMA' as EducationLevel, classes: ['Kelas X IPA 1', 'Kelas X IPS 1', 'Kelas XI IPA 1', 'Kelas XI IPS 1', 'Kelas XII IPA 1', 'Kelas XII IPS 1'], homerooms: ['Dr. Gunawan, M.Si', 'Ibu Maya, S.Pd', 'Drs. Bambang'] }
+          ])
+            .filter(group => activeLevel === 'Semua' || group.level === activeLevel)
+            .flatMap(group =>
+              group.classes.map((cls, idx) => {
+                const classStudents = students.filter(s => s.educationLevel === group.level && (s.className === cls || s.className.toLowerCase().includes(cls.toLowerCase())));
+                const homeroom = group.homerooms[idx % group.homerooms.length];
+
+                return (
+                  <div
+                    key={`${group.level}-${cls}`}
+                    className="p-4 bg-slate-800/80 rounded-xl border border-slate-700/70 hover:border-amber-500/50 transition space-y-3 relative group"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 uppercase">
+                          {group.level}
+                        </span>
+                        <h4 className="font-bold text-white text-sm">{cls}</h4>
+                      </div>
+                      <span className="text-xs font-mono font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                        {classStudents.length} Siswa
+                      </span>
+                    </div>
+
+                    <div className="text-[11px] text-slate-300 space-y-1">
+                      <p className="flex items-center gap-1.5 text-slate-400">
+                        <User className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+                        <span>Wali Kelas: <strong className="text-slate-200">{homeroom}</strong></span>
+                      </p>
+                      
+                      {/* Sample students preview in rombel */}
+                      <div className="pt-2 border-t border-slate-700/50 space-y-1">
+                        {classStudents.length > 0 ? (
+                          classStudents.slice(0, 3).map(st => (
+                            <div key={st.id} className="flex items-center justify-between text-[10px] text-slate-300 bg-slate-900/60 p-1.5 rounded border border-slate-800">
+                              <span className="font-semibold text-white truncate max-w-[140px]">{st.name}</span>
+                              <span className="text-slate-400 font-mono">NISN: {st.nisn}</span>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="text-[10px] text-slate-500 italic py-1">Belum ada siswa terdaftar di rombel ini.</div>
+                        )}
+                        {classStudents.length > 3 && (
+                          <div className="text-[9px] text-amber-400 font-semibold pt-0.5">
+                            +{classStudents.length - 3} siswa lainnya
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="pt-2 border-t border-slate-700/60 flex items-center justify-between">
+                      <button
+                        onClick={() => setShowStudentListModal(true)}
+                        className="text-[10px] text-blue-400 hover:text-blue-300 font-bold flex items-center gap-1"
+                      >
+                        <Users className="w-3 h-3" /> Lihat Semua
+                      </button>
+
+                      {isAdminOrSuper && (
+                        <button
+                          onClick={() => {
+                            setStudentFormData({
+                              nisn: `${Math.floor(1000000000 + Math.random() * 9000000000)}`,
+                              name: '',
+                              gender: 'L',
+                              className: cls,
+                              educationLevel: group.level,
+                              parentName: '',
+                              parentEmail: '',
+                              parentPhone: '081234567890',
+                              address: 'Jl. Merdeka No. 12',
+                              birthDate: '2010-05-15',
+                              status: 'Aktif'
+                            });
+                            setEditingStudent(null);
+                            setShowAddStudentModal(true);
+                          }}
+                          className="px-2 py-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 rounded text-[10px] font-bold flex items-center gap-1 transition"
+                        >
+                          <Plus className="w-3 h-3" /> + Tambah ke {cls}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })
+            )}
         </div>
       </div>
 

@@ -7,7 +7,8 @@ import {
   User,
   Send,
   X,
-  BellRing
+  BellRing,
+  Trash2
 } from 'lucide-react';
 import { Announcement, UserProfile } from '../types';
 
@@ -16,13 +17,15 @@ interface AnnouncementsBoardProps {
   currentUser: UserProfile;
   onCreateAnnouncement?: (data: Partial<Announcement>) => Promise<void>;
   onAddAnnouncement?: (data: Partial<Announcement>) => Promise<void>;
+  onDeleteAnnouncement?: (id: string) => void;
 }
 
 export const AnnouncementsBoard: React.FC<AnnouncementsBoardProps> = ({
   announcements,
   currentUser,
   onCreateAnnouncement,
-  onAddAnnouncement
+  onAddAnnouncement,
+  onDeleteAnnouncement
 }) => {
   const [showAddModal, setShowAddModal] = useState<boolean>(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('Semua');
@@ -171,9 +174,24 @@ export const AnnouncementsBoard: React.FC<AnnouncementsBoardProps> = ({
               <span className="flex items-center gap-1.5">
                 <User className="w-3.5 h-3.5 text-blue-400" /> {anc.author}
               </span>
-              <span className="flex items-center gap-1.5">
-                <Calendar className="w-3.5 h-3.5 text-slate-500" /> {anc.date}
-              </span>
+              <div className="flex items-center gap-3">
+                <span className="flex items-center gap-1.5">
+                  <Calendar className="w-3.5 h-3.5 text-slate-500" /> {anc.date}
+                </span>
+                {canPublish && onDeleteAnnouncement && (
+                  <button
+                    onClick={() => {
+                      if (confirm(`Hapus pengumuman "${anc.title}"?`)) {
+                        onDeleteAnnouncement(anc.id);
+                      }
+                    }}
+                    className="p-1 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded transition"
+                    title="Hapus Pengumuman"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         ))}

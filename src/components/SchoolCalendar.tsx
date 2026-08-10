@@ -8,20 +8,25 @@ import {
   CalendarCheck,
   X,
   Send,
-  ExternalLink
+  ExternalLink,
+  Trash2
 } from 'lucide-react';
 import { CalendarEvent, UserProfile } from '../types';
 
 interface SchoolCalendarProps {
   events: CalendarEvent[];
   currentUser: UserProfile;
-  onCreateEvent: (data: Partial<CalendarEvent>) => Promise<void>;
+  onCreateEvent?: (data: Partial<CalendarEvent>) => Promise<void>;
+  onAddEvent?: (data: Partial<CalendarEvent>) => Promise<void>;
+  onDeleteEvent?: (id: string) => void;
 }
 
 export const SchoolCalendar: React.FC<SchoolCalendarProps> = ({
   events,
   currentUser,
-  onCreateEvent
+  onCreateEvent,
+  onAddEvent,
+  onDeleteEvent
 }) => {
   const [showAddModal, setShowAddModal] = useState<boolean>(false);
   const [syncing, setSyncing] = useState<boolean>(false);
@@ -151,6 +156,19 @@ export const SchoolCalendar: React.FC<SchoolCalendarProps> = ({
                 <Clock className="w-3.5 h-3.5 text-blue-400" />
                 {ev.startDate} {ev.endDate !== ev.startDate ? `s.d ${ev.endDate}` : ''}
               </span>
+              {canManage && onDeleteEvent && (
+                <button
+                  onClick={() => {
+                    if (confirm(`Hapus agenda "${ev.title}"?`)) {
+                      onDeleteEvent(ev.id);
+                    }
+                  }}
+                  className="p-1 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded transition"
+                  title="Hapus Agenda"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              )}
             </div>
           </div>
         ))}

@@ -215,33 +215,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({ users, onLogin, onRegister
 
   return (
     <div className="min-h-screen bg-[#070A11] text-slate-100 flex flex-col justify-between relative overflow-hidden font-sans selection:bg-blue-600 selection:text-white">
-      {/* Animated Floating Gradient Orbs */}
-      <motion.div
-        animate={{
-          x: [0, 30, 0],
-          y: [0, -40, 0],
-          scale: [1, 1.15, 1],
-        }}
-        transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut' }}
-        className="absolute top-[-10%] left-[-10%] w-[600px] h-[600px] bg-blue-600/20 rounded-full blur-[140px] pointer-events-none"
-      />
-      <motion.div
-        animate={{
-          x: [0, -40, 0],
-          y: [0, 30, 0],
-          scale: [1, 1.2, 1],
-        }}
-        transition={{ duration: 15, repeat: Infinity, ease: 'easeInOut' }}
-        className="absolute bottom-[-10%] right-[-10%] w-[700px] h-[700px] bg-amber-500/15 rounded-full blur-[160px] pointer-events-none"
-      />
-      <motion.div
-        animate={{
-          opacity: [0.3, 0.7, 0.3],
-          scale: [0.9, 1.1, 0.9],
-        }}
-        transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
-        className="absolute top-[35%] right-[25%] w-[500px] h-[500px] bg-indigo-600/15 rounded-full blur-[120px] pointer-events-none"
-      />
+      {/* Static Crisp Ambient Background Gradients */}
+      <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-blue-600/15 rounded-full blur-[100px] pointer-events-none" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-amber-500/10 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute top-[35%] right-[25%] w-[400px] h-[400px] bg-indigo-600/10 rounded-full blur-[90px] pointer-events-none" />
 
       {/* Grid pattern overlay */}
       <div
@@ -643,18 +620,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({ users, onLogin, onRegister
                     </>
                   )}
                 </motion.button>
-
-                {/* Helpful Credentials Info Box */}
-                <div className="p-3.5 bg-slate-950/80 rounded-2xl border border-slate-800/80 text-[11px] text-slate-300 text-center leading-relaxed space-y-1">
-                  <div>💡 <strong>Akun Bawaan (Username / Email & Password):</strong></div>
-                  <div className="flex flex-wrap items-center justify-center gap-x-2.5 gap-y-1 text-[10px] font-mono pt-1">
-                    <span className="bg-amber-500/10 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded">superadmin@gmail.com</span>
-                    <span className="bg-blue-500/10 text-blue-300 border border-blue-500/30 px-2 py-0.5 rounded">admin@gmail.com</span>
-                    <span className="bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded">guru@gmail.com</span>
-                    <span className="bg-purple-500/10 text-purple-300 border border-purple-500/30 px-2 py-0.5 rounded">ortu@gmail.com</span>
-                    <span className="bg-teal-500/10 text-teal-300 border border-teal-500/30 px-2 py-0.5 rounded">siswa@gmail.com</span>
-                  </div>
-                </div>
               </form>
             )}
 
