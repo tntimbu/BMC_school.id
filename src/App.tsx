@@ -103,8 +103,27 @@ export default function App() {
   }, [users]);
 
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(() => {
-    return users[0] || initialUsers[0];
+    try {
+      const savedUserId = sessionStorage.getItem('siakad_current_user_id');
+      if (savedUserId) {
+        const savedUsers = localStorage.getItem('siakad_users');
+        const allUsers = savedUsers ? JSON.parse(savedUsers) : initialUsers;
+        const found = allUsers.find((u: UserProfile) => u.id === savedUserId);
+        if (found) return found;
+      }
+    } catch (err) {}
+    return null;
   });
+
+  useEffect(() => {
+    try {
+      if (currentUser) {
+        sessionStorage.setItem('siakad_current_user_id', currentUser.id);
+      } else {
+        sessionStorage.removeItem('siakad_current_user_id');
+      }
+    } catch (err) {}
+  }, [currentUser]);
 
   const [isProfileModalOpen, setIsProfileModalOpen] = useState<boolean>(false);
 
