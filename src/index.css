@@ -1,1 +1,27 @@
 @import "tailwindcss";
+
+@layer base {
+  html, body, #root {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden !important;
+    position: relative;
+    margin: 0;
+    padding: 0;
+    touch-action: manipulation;
+  }
+
+  *, ::before, ::after {
+    box-sizing: border-box;
+  }
+
+  img, video, canvas, svg, table {
+    max-width: 100%;
+  }
+}
+
+/* Custom scrollbar & mobile scroll containment */
+.overflow-x-auto {
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
+}

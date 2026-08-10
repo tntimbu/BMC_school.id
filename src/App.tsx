@@ -234,190 +234,205 @@ export default function App() {
 
   // Ref to track last JSON string received from Firestore to avoid redundant write loops
   const lastRemoteHashRef = useRef<Record<string, string>>({});
-  const isRemoteInitializedRef = useRef<Record<string, boolean>>({});
+  const isRemoteInitializedRef = useRef<Record<string, boolean>>({
+    settings: true,
+    users: true,
+    students: true,
+    grades: true,
+    attendance: true,
+    tuition: true,
+    announcements: true,
+    ppdb: true,
+    events: true,
+    notifications: true,
+    conversations: true,
+    dkn: true,
+    character: true,
+    spiritual: true
+  });
 
   // 1. Subscribe to Firestore Realtime Snapshot Listeners (Enables Instant Multi-Device Cross-Device Sync)
   useEffect(() => {
     const unsubSettings = subscribeToSyncDoc<SchoolSettings>('settings', (data) => {
+      isRemoteInitializedRef.current['settings'] = true;
       const json = JSON.stringify(data);
       if (json && json !== lastRemoteHashRef.current['settings']) {
         lastRemoteHashRef.current['settings'] = json;
-        isRemoteInitializedRef.current['settings'] = true;
         setSettings(data);
         try { localStorage.setItem('siakad_school_settings', json); } catch (e) {}
       }
     }, () => {
       isRemoteInitializedRef.current['settings'] = true;
-      syncToFirestore('settings', settings);
+      syncToFirestore('settings', settings, 0);
     });
 
     const unsubUsers = subscribeToSyncDoc<UserProfile[]>('users', (data) => {
+      isRemoteInitializedRef.current['users'] = true;
       const json = JSON.stringify(data);
       if (json && json !== lastRemoteHashRef.current['users']) {
         lastRemoteHashRef.current['users'] = json;
-        isRemoteInitializedRef.current['users'] = true;
         setUsers(data);
         try { localStorage.setItem('siakad_users', json); } catch (e) {}
       }
     }, () => {
       isRemoteInitializedRef.current['users'] = true;
-      syncToFirestore('users', users);
+      syncToFirestore('users', users, 0);
     });
 
     const unsubStudents = subscribeToSyncDoc<Student[]>('students', (data) => {
+      isRemoteInitializedRef.current['students'] = true;
       const json = JSON.stringify(data);
       if (json && json !== lastRemoteHashRef.current['students']) {
         lastRemoteHashRef.current['students'] = json;
-        isRemoteInitializedRef.current['students'] = true;
         setStudents(data);
         try { localStorage.setItem('siakad_students', json); } catch (e) {}
       }
     }, () => {
       isRemoteInitializedRef.current['students'] = true;
-      syncToFirestore('students', students);
+      syncToFirestore('students', students, 0);
     });
 
     const unsubGrades = subscribeToSyncDoc<Grade[]>('grades', (data) => {
+      isRemoteInitializedRef.current['grades'] = true;
       const json = JSON.stringify(data);
       if (json && json !== lastRemoteHashRef.current['grades']) {
         lastRemoteHashRef.current['grades'] = json;
-        isRemoteInitializedRef.current['grades'] = true;
         setGrades(data);
         try { localStorage.setItem('siakad_grades', json); } catch (e) {}
       }
     }, () => {
       isRemoteInitializedRef.current['grades'] = true;
-      syncToFirestore('grades', grades);
+      syncToFirestore('grades', grades, 0);
     });
 
     const unsubAttendance = subscribeToSyncDoc<AttendanceRecord[]>('attendance', (data) => {
+      isRemoteInitializedRef.current['attendance'] = true;
       const json = JSON.stringify(data);
       if (json && json !== lastRemoteHashRef.current['attendance']) {
         lastRemoteHashRef.current['attendance'] = json;
-        isRemoteInitializedRef.current['attendance'] = true;
         setAttendance(data);
         try { localStorage.setItem('siakad_attendance', json); } catch (e) {}
       }
     }, () => {
       isRemoteInitializedRef.current['attendance'] = true;
-      syncToFirestore('attendance', attendance);
+      syncToFirestore('attendance', attendance, 0);
     });
 
     const unsubTuition = subscribeToSyncDoc<TuitionRecord[]>('tuition', (data) => {
+      isRemoteInitializedRef.current['tuition'] = true;
       const json = JSON.stringify(data);
       if (json && json !== lastRemoteHashRef.current['tuition']) {
         lastRemoteHashRef.current['tuition'] = json;
-        isRemoteInitializedRef.current['tuition'] = true;
         setTuition(data);
         try { localStorage.setItem('siakad_tuition', json); } catch (e) {}
       }
     }, () => {
       isRemoteInitializedRef.current['tuition'] = true;
-      syncToFirestore('tuition', tuition);
+      syncToFirestore('tuition', tuition, 0);
     });
 
     const unsubAnnouncements = subscribeToSyncDoc<Announcement[]>('announcements', (data) => {
+      isRemoteInitializedRef.current['announcements'] = true;
       const json = JSON.stringify(data);
       if (json && json !== lastRemoteHashRef.current['announcements']) {
         lastRemoteHashRef.current['announcements'] = json;
-        isRemoteInitializedRef.current['announcements'] = true;
         setAnnouncements(data);
         try { localStorage.setItem('siakad_announcements', json); } catch (e) {}
       }
     }, () => {
       isRemoteInitializedRef.current['announcements'] = true;
-      syncToFirestore('announcements', announcements);
+      syncToFirestore('announcements', announcements, 0);
     });
 
     const unsubPPDB = subscribeToSyncDoc<PPDBApplication[]>('ppdb', (data) => {
+      isRemoteInitializedRef.current['ppdb'] = true;
       const json = JSON.stringify(data);
       if (json && json !== lastRemoteHashRef.current['ppdb']) {
         lastRemoteHashRef.current['ppdb'] = json;
-        isRemoteInitializedRef.current['ppdb'] = true;
         setPpdb(data);
         try { localStorage.setItem('siakad_ppdb', json); } catch (e) {}
       }
     }, () => {
       isRemoteInitializedRef.current['ppdb'] = true;
-      syncToFirestore('ppdb', ppdb);
+      syncToFirestore('ppdb', ppdb, 0);
     });
 
     const unsubEvents = subscribeToSyncDoc<CalendarEvent[]>('events', (data) => {
+      isRemoteInitializedRef.current['events'] = true;
       const json = JSON.stringify(data);
       if (json && json !== lastRemoteHashRef.current['events']) {
         lastRemoteHashRef.current['events'] = json;
-        isRemoteInitializedRef.current['events'] = true;
         setEvents(data);
         try { localStorage.setItem('siakad_events', json); } catch (e) {}
       }
     }, () => {
       isRemoteInitializedRef.current['events'] = true;
-      syncToFirestore('events', events);
+      syncToFirestore('events', events, 0);
     });
 
     const unsubNotifications = subscribeToSyncDoc<NotificationLog[]>('notifications', (data) => {
+      isRemoteInitializedRef.current['notifications'] = true;
       const json = JSON.stringify(data);
       if (json && json !== lastRemoteHashRef.current['notifications']) {
         lastRemoteHashRef.current['notifications'] = json;
-        isRemoteInitializedRef.current['notifications'] = true;
         setNotifications(data);
         try { localStorage.setItem('siakad_notifications', json); } catch (e) {}
       }
     }, () => {
       isRemoteInitializedRef.current['notifications'] = true;
-      syncToFirestore('notifications', notifications);
+      syncToFirestore('notifications', notifications, 0);
     });
 
     const unsubConversations = subscribeToSyncDoc<ChatConversation[]>('conversations', (data) => {
+      isRemoteInitializedRef.current['conversations'] = true;
       const json = JSON.stringify(data);
       if (json) {
         lastRemoteHashRef.current['conversations'] = json;
-        isRemoteInitializedRef.current['conversations'] = true;
         setConversations(data);
         try { localStorage.setItem('siakad_conversations', json); } catch (e) {}
       }
     }, () => {
       isRemoteInitializedRef.current['conversations'] = true;
-      syncToFirestore('conversations', conversations);
+      syncToFirestore('conversations', conversations, 0);
     });
 
     const unsubDKN = subscribeToSyncDoc<DKNRecord[]>('dkn', (data) => {
+      isRemoteInitializedRef.current['dkn'] = true;
       const json = JSON.stringify(data);
       if (json) {
         lastRemoteHashRef.current['dkn'] = json;
-        isRemoteInitializedRef.current['dkn'] = true;
         setDknGrades(data);
         try { localStorage.setItem('siakad_dkn', json); } catch (e) {}
       }
     }, () => {
       isRemoteInitializedRef.current['dkn'] = true;
-      syncToFirestore('dkn', dknGrades);
+      syncToFirestore('dkn', dknGrades, 0);
     });
 
     const unsubCharacter = subscribeToSyncDoc<Record<string, CharacterAssessment[]>>('character', (data) => {
+      isRemoteInitializedRef.current['character'] = true;
       const json = JSON.stringify(data);
       if (json) {
         lastRemoteHashRef.current['character'] = json;
-        isRemoteInitializedRef.current['character'] = true;
         setCharacterAssessments(data);
         try { localStorage.setItem('siakad_character', json); } catch (e) {}
       }
     }, () => {
       isRemoteInitializedRef.current['character'] = true;
-      syncToFirestore('character', characterAssessments);
+      syncToFirestore('character', characterAssessments, 0);
     });
 
     const unsubSpiritual = subscribeToSyncDoc<Record<string, SpiritualJourneyRecord>>('spiritual', (data) => {
+      isRemoteInitializedRef.current['spiritual'] = true;
       const json = JSON.stringify(data);
       if (json) {
         lastRemoteHashRef.current['spiritual'] = json;
-        isRemoteInitializedRef.current['spiritual'] = true;
         setSpiritualJourney(data);
         try { localStorage.setItem('siakad_spiritual', json); } catch (e) {}
       }
     }, () => {
       isRemoteInitializedRef.current['spiritual'] = true;
-      syncToFirestore('spiritual', spiritualJourney);
+      syncToFirestore('spiritual', spiritualJourney, 0);
     });
 
     return () => {
@@ -973,39 +988,72 @@ export default function App() {
   };
 
   const handleAddStudent = (newStudent: Student) => {
-    setStudents(prev => [newStudent, ...prev]);
+    setStudents(prev => {
+      const next = [newStudent, ...prev];
+      syncToFirestore('students', next, 0);
+      return next;
+    });
   };
 
   const handleUpdateStudent = (updatedStudent: Student) => {
-    setStudents(prev => prev.map(s => s.id === updatedStudent.id ? updatedStudent : s));
+    setStudents(prev => {
+      const next = prev.map(s => s.id === updatedStudent.id ? updatedStudent : s);
+      syncToFirestore('students', next, 0);
+      return next;
+    });
   };
 
   const handleDeleteStudent = (studentId: string) => {
-    setStudents(prev => prev.filter(s => s.id !== studentId));
+    setStudents(prev => {
+      const next = prev.filter(s => s.id !== studentId);
+      syncToFirestore('students', next, 0);
+      return next;
+    });
   };
 
   const handleDeleteUser = (userId: string) => {
-    setUsers(prev => prev.filter(u => u.id !== userId));
+    setUsers(prev => {
+      const next = prev.filter(u => u.id !== userId);
+      syncToFirestore('users', next, 0);
+      return next;
+    });
   };
 
   const handleDeleteAnnouncement = (id: string) => {
-    setAnnouncements(prev => prev.filter(a => a.id !== id));
+    setAnnouncements(prev => {
+      const next = prev.filter(a => a.id !== id);
+      syncToFirestore('announcements', next, 0);
+      return next;
+    });
   };
 
   const handleDeleteEvent = (id: string) => {
-    setEvents(prev => prev.filter(e => e.id !== id));
+    setEvents(prev => {
+      const next = prev.filter(e => e.id !== id);
+      syncToFirestore('events', next, 0);
+      return next;
+    });
   };
 
   const handleDeleteNotification = (id: string) => {
-    setNotifications(prev => prev.filter(n => n.id !== id));
+    setNotifications(prev => {
+      const next = prev.filter(n => n.id !== id);
+      syncToFirestore('notifications', next, 0);
+      return next;
+    });
   };
 
   const handleClearAllNotifications = () => {
     setNotifications([]);
+    syncToFirestore('notifications', [], 0);
   };
 
   const handleUpdateSettings = async (updated: Partial<SchoolSettings>) => {
-    setSettings(prev => ({ ...prev, ...updated }));
+    setSettings(prev => {
+      const next = { ...prev, ...updated };
+      syncToFirestore('settings', next, 0);
+      return next;
+    });
   };
 
   const handleRequestUnblock = async (reqData: Omit<UnblockRequest, 'id' | 'requestedAt' | 'status'>) => {
@@ -1076,7 +1124,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0F172A] text-slate-200 font-sans flex flex-col selection:bg-blue-600 selection:text-white pb-16 md:pb-0">
+    <div className="min-h-screen bg-[#0F172A] text-slate-200 font-sans flex flex-col selection:bg-blue-600 selection:text-white pb-16 md:pb-0 w-full max-w-full overflow-x-hidden">
       
       {/* Top Navigation Bar */}
       <Navbar
@@ -1096,7 +1144,7 @@ export default function App() {
       />
 
       {/* Main Workspace Body */}
-      <div className="flex-1 flex w-full px-3 sm:px-5 lg:px-6 py-4 gap-4 sm:gap-5">
+      <div className="flex-1 flex w-full max-w-full overflow-x-hidden px-2 sm:px-5 lg:px-6 py-4 gap-3 sm:gap-5">
         
         {/* Left High-Density Compact Navigation Sidebar */}
         <Sidebar
@@ -1108,7 +1156,7 @@ export default function App() {
         />
 
         {/* Content Module View Area */}
-        <main className="flex-1 min-w-0 space-y-4">
+        <main className="flex-1 min-w-0 max-w-full overflow-x-hidden space-y-4">
 
           {/* Blocked User Warning Alert */}
           {isUserBlocked && (

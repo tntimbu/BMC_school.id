@@ -214,15 +214,15 @@ export const LoginPage: React.FC<LoginPageProps> = ({ users, onLogin, onRegister
   };
 
   return (
-    <div className="min-h-screen bg-[#070A11] text-slate-100 flex flex-col justify-between relative overflow-hidden font-sans selection:bg-blue-600 selection:text-white">
+    <div className="min-h-screen bg-[#070A11] text-slate-100 flex flex-col justify-between relative overflow-x-hidden w-full max-w-full font-sans selection:bg-blue-600 selection:text-white">
       {/* Static Crisp Ambient Background Gradients */}
-      <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-blue-600/15 rounded-full blur-[100px] pointer-events-none" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-amber-500/10 rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute top-[35%] right-[25%] w-[400px] h-[400px] bg-indigo-600/10 rounded-full blur-[90px] pointer-events-none" />
+      <div className="absolute top-0 left-0 w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] bg-blue-600/15 rounded-full blur-[100px] pointer-events-none -translate-x-1/2 -translate-y-1/2" />
+      <div className="absolute bottom-0 right-0 w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] bg-amber-500/10 rounded-full blur-[120px] pointer-events-none translate-x-1/3 translate-y-1/3" />
+      <div className="absolute top-[35%] right-[25%] w-[300px] sm:w-[400px] h-[300px] sm:h-[400px] bg-indigo-600/10 rounded-full blur-[90px] pointer-events-none" />
 
       {/* Grid pattern overlay */}
       <div
-        className="absolute inset-0 opacity-15 pointer-events-none"
+        className="absolute inset-0 opacity-15 pointer-events-none overflow-hidden"
         style={{
           backgroundImage: `radial-gradient(rgba(255, 255, 255, 0.18) 1px, transparent 1px)`,
           backgroundSize: '28px 28px'
