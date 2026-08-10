@@ -1,0 +1,10 @@
+{
+  "name": "SIAKAD Smart School",
+  "description": "Sistem Informasi Manajemen Sekolah Terpadu dengan Nilai, PPDB, Absensi QR Code Real-time, Keuangan SPP, Dashboard Analitik & Ekspor Laporan.",
+  "requestFramePermissions": [
+    "camera"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
