@@ -21,6 +21,7 @@ import { UserProfile } from '../types';
 
 export type ActiveTab =
   | 'dashboard'
+  | 'rombel'
   | 'grades'
   | 'attendance'
   | 'tuition'
@@ -56,6 +57,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
       icon: LayoutDashboard,
       roles: ['superadmin', 'admin', 'teacher', 'parent', 'student'],
       badge: 'Utama'
+    },
+    {
+      id: 'rombel',
+      label: 'Manajemen Rombel & Kelas',
+      icon: Building2,
+      roles: ['superadmin', 'admin', 'teacher', 'parent', 'student'],
+      badge: 'Rombel'
     },
     {
       id: 'grades',

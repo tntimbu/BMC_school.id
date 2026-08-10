@@ -90,6 +90,17 @@ export interface SubjectConfig {
   isEnabled: boolean;
 }
 
+export interface RombelConfig {
+  id: string;
+  name: string; // e.g. "Kelas 1", "Kelas 2", "TK A", "Kelas VII"
+  educationLevel: EducationLevel;
+  homeroomTeacher: string; // e.g. "Pak Ahmad, S.Pd"
+  roomName?: string; // e.g. "Gedung A - R. 101"
+  capacity?: number; // default 32
+  academicYear?: string;
+  notes?: string;
+}
+
 export interface DKNRecord {
   id: string;
   studentId: string;
@@ -366,8 +377,9 @@ export interface SchoolSettings {
     date: string;
     id: string;
   };
-  // Custom Subjects (Mata Pelajaran)
+  // Custom Subjects (Mata Pelajaran) & Rombel (Rombongan Belajar)
   subjects?: SubjectConfig[];
+  customRombels?: RombelConfig[];
   // License & Account Expiration Management
   licenseStatus?: 'Aktif' | 'Masa Tenggang' | 'Kadaluarsa' | 'Diblokir';
   licenseExpirationDate?: string;

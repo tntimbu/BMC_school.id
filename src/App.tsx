@@ -39,6 +39,7 @@ import {
 import { Navbar } from './components/Navbar';
 import { Sidebar, ActiveTab } from './components/Sidebar';
 import { DashboardOverview } from './components/DashboardOverview';
+import { RombelManagement } from './components/RombelManagement';
 import { GradesManagement } from './components/GradesManagement';
 import { QRAttendance } from './components/QRAttendance';
 import { TuitionManagement } from './components/TuitionManagement';
@@ -1175,6 +1176,18 @@ export default function App() {
               onAddStudent={handleAddStudent}
               onUpdateStudent={handleUpdateStudent}
               onDeleteStudent={handleDeleteStudent}
+            />
+          )}
+
+          {activeTab === 'rombel' && (
+            <RombelManagement
+              students={activeLevel === 'Semua' ? students : students.filter(s => s.educationLevel === activeLevel)}
+              currentUser={currentUser}
+              settings={settings}
+              activeLevel={activeLevel}
+              onUpdateSettings={handleUpdateSettings}
+              onAddStudent={handleAddStudent}
+              onUpdateStudent={handleUpdateStudent}
             />
           )}
 

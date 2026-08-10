@@ -10,6 +10,7 @@ import {
   SchoolSettings,
   UserProfile,
   SubjectConfig,
+  RombelConfig,
   DKNRecord,
   CharacterAssessment,
   SpiritualJourneyRecord
@@ -46,6 +47,35 @@ export const initialSubjects: SubjectConfig[] = [
   { id: 'sbj-21', code: 'AGM-TK', name: 'Pembiasaan Moral & Nilai Agama', educationLevel: 'KB-TK', kkm: 75, category: 'Kelompok A (Wajib)', isEnabled: true }
 ];
 
+export const initialRombels: RombelConfig[] = [
+  // KB-TK
+  { id: 'rmb-tk-1', name: 'KB A', educationLevel: 'KB-TK', homeroomTeacher: 'Ibu Surtini, S.Pd', roomName: 'Gedung Playgroup R.101', capacity: 20 },
+  { id: 'rmb-tk-2', name: 'KB B', educationLevel: 'KB-TK', homeroomTeacher: 'Ibu Mariani, S.Pd', roomName: 'Gedung Playgroup R.102', capacity: 20 },
+  { id: 'rmb-tk-3', name: 'TK A', educationLevel: 'KB-TK', homeroomTeacher: 'Ibu Dewi, S.Pd', roomName: 'Gedung TK R.201', capacity: 25 },
+  { id: 'rmb-tk-4', name: 'TK B', educationLevel: 'KB-TK', homeroomTeacher: 'Ibu Endang, S.Pd', roomName: 'Gedung TK R.202', capacity: 25 },
+
+  // SD (Strictly Kelas 1 - 6 without sub-classes)
+  { id: 'rmb-sd-1', name: 'Kelas 1', educationLevel: 'SD', homeroomTeacher: 'Pak Ahmad, S.Pd', roomName: 'Gedung SD Lt 1 - R.101', capacity: 30 },
+  { id: 'rmb-sd-2', name: 'Kelas 2', educationLevel: 'SD', homeroomTeacher: 'Ibu Ratna, S.Pd', roomName: 'Gedung SD Lt 1 - R.102', capacity: 30 },
+  { id: 'rmb-sd-3', name: 'Kelas 3', educationLevel: 'SD', homeroomTeacher: 'Pak Budi, S.Pd', roomName: 'Gedung SD Lt 1 - R.103', capacity: 30 },
+  { id: 'rmb-sd-4', name: 'Kelas 4', educationLevel: 'SD', homeroomTeacher: 'Ibu Yuni, S.Pd', roomName: 'Gedung SD Lt 2 - R.201', capacity: 30 },
+  { id: 'rmb-sd-5', name: 'Kelas 5', educationLevel: 'SD', homeroomTeacher: 'Pak Hendra, S.Pd', roomName: 'Gedung SD Lt 2 - R.202', capacity: 30 },
+  { id: 'rmb-sd-6', name: 'Kelas 6', educationLevel: 'SD', homeroomTeacher: 'Ibu Siti, S.Pd', roomName: 'Gedung SD Lt 2 - R.203', capacity: 30 },
+
+  // SMP
+  { id: 'rmb-smp-1', name: 'Kelas VII', educationLevel: 'SMP', homeroomTeacher: 'Pak Rizki, M.Pd', roomName: 'Gedung SMP - R.101', capacity: 32 },
+  { id: 'rmb-smp-2', name: 'Kelas VIII', educationLevel: 'SMP', homeroomTeacher: 'Ibu Linda, S.Pd', roomName: 'Gedung SMP - R.102', capacity: 32 },
+  { id: 'rmb-smp-3', name: 'Kelas IX', educationLevel: 'SMP', homeroomTeacher: 'Pak Teguh, S.Pd', roomName: 'Gedung SMP - R.103', capacity: 32 },
+
+  // SMA
+  { id: 'rmb-sma-1', name: 'Kelas X IPA', educationLevel: 'SMA', homeroomTeacher: 'Dr. Gunawan, M.Si', roomName: 'Gedung SMA - R.301', capacity: 36 },
+  { id: 'rmb-sma-2', name: 'Kelas X IPS', educationLevel: 'SMA', homeroomTeacher: 'Ibu Maya, S.Pd', roomName: 'Gedung SMA - R.302', capacity: 36 },
+  { id: 'rmb-sma-3', name: 'Kelas XI IPA', educationLevel: 'SMA', homeroomTeacher: 'Drs. Bambang', roomName: 'Gedung SMA - R.303', capacity: 36 },
+  { id: 'rmb-sma-4', name: 'Kelas XI IPS', educationLevel: 'SMA', homeroomTeacher: 'Ibu Rina, M.Pd', roomName: 'Gedung SMA - R.304', capacity: 36 },
+  { id: 'rmb-sma-5', name: 'Kelas XII IPA 1', educationLevel: 'SMA', homeroomTeacher: 'Pak Handoko, M.Pd', roomName: 'Gedung SMA - R.305', capacity: 36 },
+  { id: 'rmb-sma-6', name: 'Kelas XII IPA 2', educationLevel: 'SMA', homeroomTeacher: 'Ibu Fitri, S.Pd', roomName: 'Gedung SMA - R.306', capacity: 36 }
+];
+
 export const initialSchoolSettings: SchoolSettings = {
   foundationName: 'Yayasan Pendidikan Nusantara Jaya',
   schoolName: 'SMA Negeri 1 Nusantara (SIAKAD Integrated)',
@@ -80,6 +110,7 @@ export const initialSchoolSettings: SchoolSettings = {
     id: 'broadcast-1'
   },
   subjects: initialSubjects,
+  customRombels: initialRombels,
   units: {
     'KB-TK': 'KB & TK Islam Nusantara',
     'SD': 'SD Nusantara 01',
@@ -287,7 +318,7 @@ export const initialStudents: Student[] = [
     nisn: '0151234002',
     name: 'Rafathar Malik Ahmad',
     gender: 'L',
-    className: 'Kelas 4A SD',
+    className: 'Kelas 4',
     educationLevel: 'SD',
     parentName: 'Raffi Ahmad',
     parentEmail: 'raffi.ahmad@gmail.com',
@@ -303,7 +334,7 @@ export const initialStudents: Student[] = [
     nisn: '0111234003',
     name: 'Nayla Amira Putri',
     gender: 'P',
-    className: 'Kelas 8B SMP',
+    className: 'Kelas VIII',
     educationLevel: 'SMP',
     parentName: 'Bambang Sukarta',
     parentEmail: 'bambang.s@gmail.com',
