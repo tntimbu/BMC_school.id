@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Users,
   GraduationCap,
@@ -208,6 +208,11 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
     return videoId ? `https://www.youtube-nocookie.com/embed/${videoId}` : null;
   };
 
+  // Reset dismiss state whenever settings/broadcast alert changes
+  useEffect(() => {
+    setDismissBroadcast(false);
+  }, [settings.broadcastNotification?.date, settings.broadcastNotification?.title, settings.broadcastNotification?.message]);
+
   const youtubeEmbedUrl = getYouTubeEmbedUrl(settings.youtubeVideoUrl);
 
   const broadcastAlert = settings.broadcastNotification;
@@ -230,9 +235,25 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
         </div>
       )}
 
-      {/* Broadcast Alert Banner Card for ALL Users + Admin Control */}
-      {(broadcastAlert?.active && !dismissBroadcast || isAdminOrSuper) && (
-        <div className={`p-4 sm:p-5 rounded-2xl border ${broadcastAlert?.active ? broadcastStyles : 'bg-slate-900/90 border-slate-800 text-slate-300'} shadow-2xl relative overflow-hidden transition-all animate-in fade-in duration-200`}>
+      {/* Admin Button to create/edit broadcast when card is dismissed or inactive */}
+      {isAdminOrSuper && (dismissBroadcast || !broadcastAlert?.active) && (
+        <div className="flex justify-end">
+          <button
+            onClick={() => {
+              setDismissBroadcast(false);
+              setShowBroadcastModal(true);
+            }}
+            className="px-3.5 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-xs font-bold border border-amber-500/40 rounded-xl flex items-center gap-2 shadow-md transition"
+          >
+            <Radio className="w-4 h-4 text-amber-400" />
+            <span>{broadcastAlert?.active ? 'Tampilkan / Edit Broadcast Alert' : '+ Buat Alert Broadcast baru'}</span>
+          </button>
+        </div>
+      )}
+
+      {/* Broadcast Alert Banner Card for ALL Users */}
+      {!dismissBroadcast && broadcastAlert?.active && (
+        <div className={`p-4 sm:p-5 rounded-2xl border ${broadcastStyles} shadow-2xl relative overflow-hidden transition-all animate-in fade-in duration-200`}>
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-start gap-3 min-w-0 flex-1">
               <div className="p-2 rounded-xl bg-white/10 shrink-0 mt-0.5">
@@ -246,17 +267,12 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
                   <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-500/30 text-amber-300 border border-amber-500/40">
                     Sistem Broadcast Admin & Superadmin
                   </span>
-                  {!broadcastAlert?.active && (
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30">
-                      Status: Non-Aktif
-                    </span>
-                  )}
                 </div>
                 <h3 className="font-extrabold text-sm sm:text-base tracking-tight leading-snug break-words">
-                  {broadcastAlert?.title || 'Belum Ada Alert Broadcast Aktif'}
+                  {broadcastAlert?.title}
                 </h3>
                 <p className="text-xs sm:text-sm mt-1 leading-relaxed opacity-95 break-words">
-                  {broadcastAlert?.message || 'Admin dan Superadmin dapat mengirimkan notifikasi pemberitahuan berupa kartu alert di sini.'}
+                  {broadcastAlert?.message}
                 </p>
               </div>
             </div>
@@ -269,19 +285,18 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
                   id="btn-edit-broadcast"
                 >
                   <Edit className="w-3.5 h-3.5" />
-                  <span>{broadcastAlert?.active ? 'Edit Alert' : '+ Buat Alert Broadcast'}</span>
+                  <span>Edit Alert</span>
                 </button>
               )}
 
-              {broadcastAlert?.active && (
-                <button
-                  onClick={() => setDismissBroadcast(true)}
-                  className="p-1.5 rounded-xl bg-black/20 hover:bg-black/40 text-white/80 hover:text-white transition shrink-0"
-                  aria-label="Tutup Notifikasi"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              )}
+              <button
+                onClick={() => setDismissBroadcast(true)}
+                className="p-1.5 rounded-xl bg-black/20 hover:bg-black/40 text-white/80 hover:text-white transition shrink-0 cursor-pointer"
+                aria-label="Tutup Notifikasi Kartu"
+                title="Tutup Notifikasi Kartu Ini"
+              >
+                <X className="w-4 h-4" />
+              </button>
             </div>
           </div>
         </div>

@@ -54,8 +54,11 @@ export const Navbar: React.FC<NavbarProps> = ({
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showNotifDropdown, setShowNotifDropdown] = useState(false);
   const [showLevelDropdown, setShowLevelDropdown] = useState(false);
+  const [dismissedNotifIds, setDismissedNotifIds] = useState<string[]>([]);
 
-  const unreadAlerts = notifications.filter(
+  const visibleNotifications = notifications.filter(n => !dismissedNotifIds.includes(n.id));
+
+  const unreadAlerts = visibleNotifications.filter(
     n => n.type === 'Push Alert' || n.subject.includes('⚠️') || n.status === 'Pending'
   ).length;
 
@@ -215,39 +218,68 @@ export const Navbar: React.FC<NavbarProps> = ({
               </button>
 
               {showNotifDropdown && (
-                <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl p-4 z-50 text-slate-200">
+                <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl p-4 z-50 text-slate-200 animate-in fade-in zoom-in-95 duration-150">
                   <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-                    <h3 className="font-semibold text-sm flex items-center gap-2">
-                      <Bell className="w-4 h-4 text-blue-400" /> Notifikasi & Early Warnings
+                    <h3 className="font-bold text-sm flex items-center gap-2">
+                      <Bell className="w-4 h-4 text-amber-400" /> Notifikasi & Alert
                     </h3>
-                    <button
-                      onClick={() => setShowNotifDropdown(false)}
-                      className="text-slate-400 hover:text-white"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
+                    <div className="flex items-center gap-2">
+                      {visibleNotifications.length > 0 && (
+                        <button
+                          onClick={() => setDismissedNotifIds(notifications.map(n => n.id))}
+                          className="text-[10px] text-slate-400 hover:text-amber-300 underline font-medium transition cursor-pointer"
+                        >
+                          Bersihkan Semua
+                        </button>
+                      )}
+                      <button
+                        onClick={() => setShowNotifDropdown(false)}
+                        className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition cursor-pointer"
+                        title="Tutup Menu Notifikasi"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
 
                   <div className="mt-3 space-y-2.5 max-h-72 overflow-y-auto pr-1">
-                    {notifications.slice(0, 5).map(notif => (
-                      <div
-                        key={notif.id}
-                        className={`p-2.5 rounded-lg text-xs border ${
-                          notif.type === 'Push Alert' || notif.subject.includes('⚠️')
-                            ? 'bg-amber-950/40 border-amber-800/50 text-amber-200'
-                            : 'bg-slate-800/50 border-slate-700/50 text-slate-300'
-                        }`}
-                      >
-                        <div className="flex items-center justify-between font-semibold mb-1">
-                          <span className="flex items-center gap-1.5 truncate">
-                            {notif.subject.includes('⚠️') && <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0" />}
-                            {notif.category}
-                          </span>
-                          <span className="text-[10px] text-slate-400">{notif.sentAt.split(' ')[0]}</span>
-                        </div>
-                        <p className="line-clamp-2 text-[11px] text-slate-300 leading-snug">{notif.body}</p>
+                    {visibleNotifications.length === 0 ? (
+                      <div className="p-6 text-center text-slate-400 text-xs font-medium">
+                        Tidak ada notifikasi aktif saat ini.
                       </div>
-                    ))}
+                    ) : (
+                      visibleNotifications.slice(0, 8).map(notif => (
+                        <div
+                          key={notif.id}
+                          className={`p-3 rounded-xl text-xs border relative group transition-all ${
+                            notif.type === 'Push Alert' || notif.subject.includes('⚠️')
+                              ? 'bg-amber-950/40 border-amber-800/50 text-amber-200'
+                              : 'bg-slate-800/60 border-slate-700/60 text-slate-300'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between font-semibold mb-1 pr-5">
+                            <span className="flex items-center gap-1.5 truncate text-amber-300">
+                              {notif.subject.includes('⚠️') && <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0" />}
+                              {notif.category}
+                            </span>
+                            <span className="text-[10px] text-slate-400 font-mono">{notif.sentAt.split(' ')[0]}</span>
+                          </div>
+                          <p className="line-clamp-2 text-[11px] text-slate-300 leading-snug">{notif.body}</p>
+
+                          {/* Delete/Dismiss notification card item */}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDismissedNotifIds(prev => [...prev, notif.id]);
+                            }}
+                            className="absolute top-2.5 right-2.5 p-1 text-slate-400 hover:text-rose-400 rounded-lg hover:bg-slate-900/80 transition cursor-pointer"
+                            title="Hapus Notifikasi Ini"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ))
+                    )}
                   </div>
                 </div>
               )}
