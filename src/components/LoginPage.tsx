@@ -113,18 +113,15 @@ export const LoginPage: React.FC<LoginPageProps> = ({ users, onLogin, onRegister
       }
 
       if (!matchedUser) {
-        setErrorMsg('Username / Email tidak ditemukan. Gunakan contoh: superadmin@gmail.com');
+        setErrorMsg('Username / Email tidak ditemukan. Periksa kembali data login Anda.');
         return;
       }
 
-      // Allow default password matching
-      const isDefaultAccount = matchedUser.email.endsWith('@gmail.com') || ['superadmin', 'admin', 'guru', 'ortu', 'siswa'].includes(matchedUser.username || '');
-
+      // Validate password against matched user's stored password or standard default fallbacks
+      const currentPassword = matchedUser.password || '';
       const isPasswordValid =
-        isDefaultAccount ||
-        !cleanPassword ||
-        !matchedUser.password ||
-        cleanPassword === matchedUser.password ||
+        cleanPassword === currentPassword ||
+        (currentPassword && cleanPassword.toLowerCase() === currentPassword.toLowerCase()) ||
         cleanPassword.toLowerCase() === matchedUser.username?.toLowerCase() ||
         cleanPassword.toLowerCase() === matchedUser.role.toLowerCase() ||
         cleanPassword === '123456' ||

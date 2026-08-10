@@ -79,15 +79,9 @@ export default function App() {
       const saved = localStorage.getItem('siakad_users');
       if (saved) {
         const parsed: UserProfile[] = JSON.parse(saved);
-        // Merge with initialUsers to guarantee standard default accounts are always up-to-date
-        const merged = initialUsers.map(initU => {
-          const match = parsed.find(p => p.id === initU.id || p.role === initU.role);
-          return match
-            ? { ...match, email: initU.email, username: initU.username, password: initU.password, status: 'Aktif' }
-            : initU;
-        });
-        const nonDefaults = parsed.filter(p => !initialUsers.some(initU => initU.id === p.id));
-        return [...merged, ...nonDefaults];
+        // Preserve all saved account modifications (email, username, password)
+        const missingInitialUsers = initialUsers.filter(initU => !parsed.some(p => p.id === initU.id));
+        return [...parsed, ...missingInitialUsers];
       }
     } catch (err) {}
     return initialUsers;
