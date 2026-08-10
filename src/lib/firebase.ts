@@ -1,0 +1,69 @@
+import { initializeApp } from 'firebase/app';
+import { getFirestore, doc, onSnapshot, setDoc } from 'firebase/firestore';
+import firebaseConfig from '../../firebase-applet-config.json';
+
+const app = initializeApp(firebaseConfig);
+
+export const db = getFirestore(
+  app,
+  firebaseConfig.firestoreDatabaseId && firebaseConfig.firestoreDatabaseId !== '(default)'
+    ? firebaseConfig.firestoreDatabaseId
+    : undefined
+);
+
+const STATE_COLLECTION = 'siakad_state';
+
+// Realtime snapshot listener for a specific document key
+export const subscribeToSyncDoc = <T>(
+  docKey: string,
+  onDataUpdate: (data: T) => void
+): (() => void) => {
+  try {
+    const docRef = doc(db, STATE_COLLECTION, docKey);
+    const unsubscribe = onSnapshot(
+      docRef,
+      (snapshot) => {
+        if (snapshot.exists()) {
+          const payload = snapshot.data();
+          if (payload && payload.data !== undefined) {
+            onDataUpdate(payload.data as T);
+          }
+        }
+      },
+      (error) => {
+        console.warn(`[Firestore Realtime] Listener error on ${docKey}:`, error);
+      }
+    );
+    return unsubscribe;
+  } catch (err) {
+    console.error(`[Firestore Realtime] Failed to subscribe to ${docKey}:`, err);
+    return () => {};
+  }
+};
+
+// Debounce map to prevent rapid multi-write loop
+const writeTimeouts: Record<string, NodeJS.Timeout> = {};
+
+// Save data to Firestore real-time database
+export const syncToFirestore = async <T>(docKey: string, data: T, debounceMs = 200): Promise<void> => {
+  if (writeTimeouts[docKey]) {
+    clearTimeout(writeTimeouts[docKey]);
+  }
+
+  return new Promise((resolve) => {
+    writeTimeouts[docKey] = setTimeout(async () => {
+      try {
+        const docRef = doc(db, STATE_COLLECTION, docKey);
+        await setDoc(docRef, {
+          data,
+          updatedAt: Date.now(),
+          updatedBy: 'SIAKAD_CLOUD'
+        });
+        resolve();
+      } catch (err) {
+        console.error(`[Firestore Realtime] Save failed for ${docKey}:`, err);
+        resolve();
+      }
+    }, debounceMs);
+  });
+};

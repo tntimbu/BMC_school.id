@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { subscribeToSyncDoc, syncToFirestore } from './lib/firebase';
 import {
   initialSchoolSettings,
   initialUsers,
@@ -230,102 +231,321 @@ export default function App() {
   const [darkMode, setDarkMode] = useState<boolean>(true);
   const [language, setLanguage] = useState<'id' | 'en'>('id');
 
-  // Persistence & Real-time Synchronization Effects
+  // Ref to track last JSON string received from Firestore to avoid redundant write loops
+  const lastRemoteHashRef = useRef<Record<string, string>>({});
+
+  // 1. Subscribe to Firestore Realtime Snapshot Listeners (Enables Instant Multi-Device Cross-Device Sync)
+  useEffect(() => {
+    const unsubSettings = subscribeToSyncDoc<SchoolSettings>('settings', (data) => {
+      const json = JSON.stringify(data);
+      if (json && json !== lastRemoteHashRef.current['settings']) {
+        lastRemoteHashRef.current['settings'] = json;
+        setSettings(data);
+        try { localStorage.setItem('siakad_school_settings', json); } catch (e) {}
+      }
+    });
+
+    const unsubUsers = subscribeToSyncDoc<UserProfile[]>('users', (data) => {
+      const json = JSON.stringify(data);
+      if (json && json !== lastRemoteHashRef.current['users']) {
+        lastRemoteHashRef.current['users'] = json;
+        setUsers(data);
+        try { localStorage.setItem('siakad_users', json); } catch (e) {}
+      }
+    });
+
+    const unsubStudents = subscribeToSyncDoc<Student[]>('students', (data) => {
+      const json = JSON.stringify(data);
+      if (json && json !== lastRemoteHashRef.current['students']) {
+        lastRemoteHashRef.current['students'] = json;
+        setStudents(data);
+        try { localStorage.setItem('siakad_students', json); } catch (e) {}
+      }
+    });
+
+    const unsubGrades = subscribeToSyncDoc<Grade[]>('grades', (data) => {
+      const json = JSON.stringify(data);
+      if (json && json !== lastRemoteHashRef.current['grades']) {
+        lastRemoteHashRef.current['grades'] = json;
+        setGrades(data);
+        try { localStorage.setItem('siakad_grades', json); } catch (e) {}
+      }
+    });
+
+    const unsubAttendance = subscribeToSyncDoc<AttendanceRecord[]>('attendance', (data) => {
+      const json = JSON.stringify(data);
+      if (json && json !== lastRemoteHashRef.current['attendance']) {
+        lastRemoteHashRef.current['attendance'] = json;
+        setAttendance(data);
+        try { localStorage.setItem('siakad_attendance', json); } catch (e) {}
+      }
+    });
+
+    const unsubTuition = subscribeToSyncDoc<TuitionRecord[]>('tuition', (data) => {
+      const json = JSON.stringify(data);
+      if (json && json !== lastRemoteHashRef.current['tuition']) {
+        lastRemoteHashRef.current['tuition'] = json;
+        setTuition(data);
+        try { localStorage.setItem('siakad_tuition', json); } catch (e) {}
+      }
+    });
+
+    const unsubAnnouncements = subscribeToSyncDoc<Announcement[]>('announcements', (data) => {
+      const json = JSON.stringify(data);
+      if (json && json !== lastRemoteHashRef.current['announcements']) {
+        lastRemoteHashRef.current['announcements'] = json;
+        setAnnouncements(data);
+        try { localStorage.setItem('siakad_announcements', json); } catch (e) {}
+      }
+    });
+
+    const unsubPPDB = subscribeToSyncDoc<PPDBApplication[]>('ppdb', (data) => {
+      const json = JSON.stringify(data);
+      if (json && json !== lastRemoteHashRef.current['ppdb']) {
+        lastRemoteHashRef.current['ppdb'] = json;
+        setPpdb(data);
+        try { localStorage.setItem('siakad_ppdb', json); } catch (e) {}
+      }
+    });
+
+    const unsubEvents = subscribeToSyncDoc<CalendarEvent[]>('events', (data) => {
+      const json = JSON.stringify(data);
+      if (json && json !== lastRemoteHashRef.current['events']) {
+        lastRemoteHashRef.current['events'] = json;
+        setEvents(data);
+        try { localStorage.setItem('siakad_events', json); } catch (e) {}
+      }
+    });
+
+    const unsubNotifications = subscribeToSyncDoc<NotificationLog[]>('notifications', (data) => {
+      const json = JSON.stringify(data);
+      if (json && json !== lastRemoteHashRef.current['notifications']) {
+        lastRemoteHashRef.current['notifications'] = json;
+        setNotifications(data);
+        try { localStorage.setItem('siakad_notifications', json); } catch (e) {}
+      }
+    });
+
+    const unsubConversations = subscribeToSyncDoc<ChatConversation[]>('conversations', (data) => {
+      const json = JSON.stringify(data);
+      if (json && json !== lastRemoteHashRef.current['conversations']) {
+        lastRemoteHashRef.current['conversations'] = json;
+        setConversations(data);
+        try { localStorage.setItem('siakad_conversations', json); } catch (e) {}
+      }
+    });
+
+    const unsubDKN = subscribeToSyncDoc<DKNRecord[]>('dkn', (data) => {
+      const json = JSON.stringify(data);
+      if (json && json !== lastRemoteHashRef.current['dkn']) {
+        lastRemoteHashRef.current['dkn'] = json;
+        setDknGrades(data);
+        try { localStorage.setItem('siakad_dkn', json); } catch (e) {}
+      }
+    });
+
+    const unsubCharacter = subscribeToSyncDoc<Record<string, CharacterAssessment[]>>('character', (data) => {
+      const json = JSON.stringify(data);
+      if (json && json !== lastRemoteHashRef.current['character']) {
+        lastRemoteHashRef.current['character'] = json;
+        setCharacterAssessments(data);
+        try { localStorage.setItem('siakad_character', json); } catch (e) {}
+      }
+    });
+
+    const unsubSpiritual = subscribeToSyncDoc<Record<string, SpiritualJourneyRecord>>('spiritual', (data) => {
+      const json = JSON.stringify(data);
+      if (json && json !== lastRemoteHashRef.current['spiritual']) {
+        lastRemoteHashRef.current['spiritual'] = json;
+        setSpiritualJourney(data);
+        try { localStorage.setItem('siakad_spiritual', json); } catch (e) {}
+      }
+    });
+
+    return () => {
+      unsubSettings();
+      unsubUsers();
+      unsubStudents();
+      unsubGrades();
+      unsubAttendance();
+      unsubTuition();
+      unsubAnnouncements();
+      unsubPPDB();
+      unsubEvents();
+      unsubNotifications();
+      unsubConversations();
+      unsubDKN();
+      unsubCharacter();
+      unsubSpiritual();
+    };
+  }, []);
+
+  // 2. Local State Changes -> Persist to LocalStorage, BroadcastChannel, and Firestore Cloud Database
   useEffect(() => {
     try {
-      localStorage.setItem('siakad_school_settings', JSON.stringify(settings));
+      const json = JSON.stringify(settings);
+      localStorage.setItem('siakad_school_settings', json);
       broadcastStateSync('SYNC_SETTINGS', settings);
+      if (json !== lastRemoteHashRef.current['settings']) {
+        lastRemoteHashRef.current['settings'] = json;
+        syncToFirestore('settings', settings);
+      }
     } catch (err) {}
   }, [settings]);
 
   useEffect(() => {
     try {
-      localStorage.setItem('siakad_users', JSON.stringify(users));
+      const json = JSON.stringify(users);
+      localStorage.setItem('siakad_users', json);
       broadcastStateSync('SYNC_USERS', users);
+      if (json !== lastRemoteHashRef.current['users']) {
+        lastRemoteHashRef.current['users'] = json;
+        syncToFirestore('users', users);
+      }
     } catch (err) {}
   }, [users]);
 
   useEffect(() => {
     try {
-      localStorage.setItem('siakad_students', JSON.stringify(students));
+      const json = JSON.stringify(students);
+      localStorage.setItem('siakad_students', json);
       broadcastStateSync('SYNC_STUDENTS', students);
+      if (json !== lastRemoteHashRef.current['students']) {
+        lastRemoteHashRef.current['students'] = json;
+        syncToFirestore('students', students);
+      }
     } catch (err) {}
   }, [students]);
 
   useEffect(() => {
     try {
-      localStorage.setItem('siakad_grades', JSON.stringify(grades));
+      const json = JSON.stringify(grades);
+      localStorage.setItem('siakad_grades', json);
       broadcastStateSync('SYNC_GRADES', grades);
+      if (json !== lastRemoteHashRef.current['grades']) {
+        lastRemoteHashRef.current['grades'] = json;
+        syncToFirestore('grades', grades);
+      }
     } catch (err) {}
   }, [grades]);
 
   useEffect(() => {
     try {
-      localStorage.setItem('siakad_attendance', JSON.stringify(attendance));
+      const json = JSON.stringify(attendance);
+      localStorage.setItem('siakad_attendance', json);
       broadcastStateSync('SYNC_ATTENDANCE', attendance);
+      if (json !== lastRemoteHashRef.current['attendance']) {
+        lastRemoteHashRef.current['attendance'] = json;
+        syncToFirestore('attendance', attendance);
+      }
     } catch (err) {}
   }, [attendance]);
 
   useEffect(() => {
     try {
-      localStorage.setItem('siakad_tuition', JSON.stringify(tuition));
+      const json = JSON.stringify(tuition);
+      localStorage.setItem('siakad_tuition', json);
       broadcastStateSync('SYNC_TUITION', tuition);
+      if (json !== lastRemoteHashRef.current['tuition']) {
+        lastRemoteHashRef.current['tuition'] = json;
+        syncToFirestore('tuition', tuition);
+      }
     } catch (err) {}
   }, [tuition]);
 
   useEffect(() => {
     try {
-      localStorage.setItem('siakad_announcements', JSON.stringify(announcements));
+      const json = JSON.stringify(announcements);
+      localStorage.setItem('siakad_announcements', json);
       broadcastStateSync('SYNC_ANNOUNCEMENTS', announcements);
+      if (json !== lastRemoteHashRef.current['announcements']) {
+        lastRemoteHashRef.current['announcements'] = json;
+        syncToFirestore('announcements', announcements);
+      }
     } catch (err) {}
   }, [announcements]);
 
   useEffect(() => {
     try {
-      localStorage.setItem('siakad_ppdb', JSON.stringify(ppdb));
+      const json = JSON.stringify(ppdb);
+      localStorage.setItem('siakad_ppdb', json);
       broadcastStateSync('SYNC_PPDB', ppdb);
+      if (json !== lastRemoteHashRef.current['ppdb']) {
+        lastRemoteHashRef.current['ppdb'] = json;
+        syncToFirestore('ppdb', ppdb);
+      }
     } catch (err) {}
   }, [ppdb]);
 
   useEffect(() => {
     try {
-      localStorage.setItem('siakad_events', JSON.stringify(events));
+      const json = JSON.stringify(events);
+      localStorage.setItem('siakad_events', json);
       broadcastStateSync('SYNC_EVENTS', events);
+      if (json !== lastRemoteHashRef.current['events']) {
+        lastRemoteHashRef.current['events'] = json;
+        syncToFirestore('events', events);
+      }
     } catch (err) {}
   }, [events]);
 
   useEffect(() => {
     try {
-      localStorage.setItem('siakad_notifications', JSON.stringify(notifications));
+      const json = JSON.stringify(notifications);
+      localStorage.setItem('siakad_notifications', json);
       broadcastStateSync('SYNC_NOTIFICATIONS', notifications);
+      if (json !== lastRemoteHashRef.current['notifications']) {
+        lastRemoteHashRef.current['notifications'] = json;
+        syncToFirestore('notifications', notifications);
+      }
     } catch (err) {}
   }, [notifications]);
 
   useEffect(() => {
     try {
-      localStorage.setItem('siakad_conversations', JSON.stringify(conversations));
+      const json = JSON.stringify(conversations);
+      localStorage.setItem('siakad_conversations', json);
       broadcastStateSync('SYNC_CONVERSATIONS', conversations);
+      if (json !== lastRemoteHashRef.current['conversations']) {
+        lastRemoteHashRef.current['conversations'] = json;
+        syncToFirestore('conversations', conversations);
+      }
     } catch (err) {}
   }, [conversations]);
 
   useEffect(() => {
     try {
-      localStorage.setItem('siakad_dkn', JSON.stringify(dknGrades));
+      const json = JSON.stringify(dknGrades);
+      localStorage.setItem('siakad_dkn', json);
       broadcastStateSync('SYNC_DKN', dknGrades);
+      if (json !== lastRemoteHashRef.current['dkn']) {
+        lastRemoteHashRef.current['dkn'] = json;
+        syncToFirestore('dkn', dknGrades);
+      }
     } catch (err) {}
   }, [dknGrades]);
 
   useEffect(() => {
     try {
-      localStorage.setItem('siakad_character', JSON.stringify(characterAssessments));
+      const json = JSON.stringify(characterAssessments);
+      localStorage.setItem('siakad_character', json);
       broadcastStateSync('SYNC_CHARACTER', characterAssessments);
+      if (json !== lastRemoteHashRef.current['character']) {
+        lastRemoteHashRef.current['character'] = json;
+        syncToFirestore('character', characterAssessments);
+      }
     } catch (err) {}
   }, [characterAssessments]);
 
   useEffect(() => {
     try {
-      localStorage.setItem('siakad_spiritual', JSON.stringify(spiritualJourney));
+      const json = JSON.stringify(spiritualJourney);
+      localStorage.setItem('siakad_spiritual', json);
       broadcastStateSync('SYNC_SPIRITUAL', spiritualJourney);
+      if (json !== lastRemoteHashRef.current['spiritual']) {
+        lastRemoteHashRef.current['spiritual'] = json;
+        syncToFirestore('spiritual', spiritualJourney);
+      }
     } catch (err) {}
   }, [spiritualJourney]);
 

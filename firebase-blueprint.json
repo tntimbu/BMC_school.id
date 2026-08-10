@@ -1,0 +1,60 @@
+{
+  "entities": {
+    "settings": {
+      "title": "School Settings",
+      "description": "Global school branding, broadcast, academic settings"
+    },
+    "users": {
+      "title": "User Profiles",
+      "description": "System accounts"
+    },
+    "students": {
+      "title": "Student Records",
+      "description": "Student master data"
+    },
+    "grades": {
+      "title": "Grades",
+      "description": "Student grades"
+    },
+    "attendance": {
+      "title": "Attendance",
+      "description": "Attendance logs"
+    },
+    "tuition": {
+      "title": "Tuition",
+      "description": "Tuition payments"
+    },
+    "announcements": {
+      "title": "Announcements",
+      "description": "Announcements"
+    },
+    "ppdb": {
+      "title": "PPDB",
+      "description": "New admissions"
+    },
+    "events": {
+      "title": "Calendar Events",
+      "description": "Events schedule"
+    },
+    "notifications": {
+      "title": "Notifications",
+      "description": "Notification logs"
+    },
+    "dkn": {
+      "title": "DKN Grades",
+      "description": "DKN grade data"
+    },
+    "character": {
+      "title": "Character",
+      "description": "Character assessments"
+    },
+    "spiritual": {
+      "title": "Spiritual",
+      "description": "Spiritual journey records"
+    },
+    "conversations": {
+      "title": "Conversations",
+      "description": "Realtime chat conversations"
+    }
+  }
+}
