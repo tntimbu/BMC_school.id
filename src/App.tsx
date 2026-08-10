@@ -731,34 +731,6 @@ export default function App() {
         </main>
       </div>
 
-      {/* High-Density Compact Bottom Status Bar Footer - Visible only to Admin & Superadmin */}
-      {(currentUser?.role === 'admin' || currentUser?.role === 'superadmin') && (
-        <footer className="bg-[#1E293B] border-t border-slate-800 py-2.5 px-4 text-[11px] text-slate-400">
-          <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
-            <div className="flex items-center gap-3">
-              <span className="flex items-center gap-1.5 font-semibold text-emerald-400">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                SIAKAD Yayasan v4.5 PRO (Encrypted)
-              </span>
-              <span className="text-slate-600 hidden sm:inline">•</span>
-              <span className="hidden sm:inline-flex items-center gap-1 text-slate-400">
-                <Lock className="w-3 h-3 text-blue-400" /> AES-256 Multi-Level Security
-              </span>
-            </div>
-
-            <div className="flex items-center gap-4 text-[10px] text-slate-400">
-              <span className="flex items-center gap-1">
-                <Cpu className="w-3 h-3 text-indigo-400" /> Latensi: 12ms
-              </span>
-              <span className="flex items-center gap-1">
-                <Cloud className="w-3 h-3 text-cyan-400" /> Sync Cloud: Real-time
-              </span>
-              <span>© 2026 {settings.foundationName}</span>
-            </div>
-          </div>
-        </footer>
-      )}
-
       {/* Mobile Bottom Floating Quick Navigation Bar */}
       <BottomNavigation
         activeTab={activeTab}

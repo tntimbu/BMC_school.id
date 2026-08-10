@@ -283,17 +283,22 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
 
       {/* 4 Units Overview Cards - Multi-Jenjang Yayasan */}
       {settings.showLevelOverview !== false && (
-        <div className="space-y-2.5">
-          <div className="flex items-center justify-between gap-2 flex-wrap">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
-              <Layers className="w-4 h-4 text-amber-400 shrink-0" /> Unit Pendidikan Under {settings.foundationName}
-            </h3>
-            <span className="text-[11px] text-amber-400 font-semibold bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full">
+        <div className={`${combinedCardStyle} space-y-4`}>
+          <div className="flex items-center justify-between gap-2 flex-wrap border-b border-slate-800 pb-3">
+            <div className="min-w-0">
+              <h3 className="font-bold text-xs sm:text-sm text-white flex items-center gap-2 truncate">
+                <Layers className="w-4 h-4 text-amber-400 shrink-0" /> Unit Pendidikan {settings.foundationName}
+              </h3>
+              <p className="text-[10px] text-slate-400 truncate">
+                Rangkuman statistik jumlah siswa & status operasional per jenjang pendidikan
+              </p>
+            </div>
+            <span className="text-[11px] text-amber-400 font-semibold bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded-lg shrink-0">
               Tampilan: {activeLevel === 'Semua' ? 'Semua Jenjang' : activeLevel}
             </span>
           </div>
 
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3.5">
             {levelsList.map(lvl => {
               const count = students.filter(s => s.educationLevel === lvl.key).length;
               const customName = settings.units[lvl.key] || lvl.label;
@@ -302,22 +307,22 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
               return (
                 <div
                   key={lvl.key}
-                  className={`p-2.5 sm:p-4 transition-all min-w-0 ${cardBgClass} ${cardRadiusClass} ${
+                  className={`p-3 sm:p-4 rounded-xl transition-all min-w-0 bg-slate-800/60 border ${
                     isSelected
-                      ? 'border-2 border-amber-500 shadow-lg shadow-amber-500/10'
-                      : `${cardBorderClass} hover:border-slate-700`
+                      ? 'border-amber-500 ring-1 ring-amber-500/50 bg-amber-500/10 shadow-lg shadow-amber-500/10'
+                      : 'border-slate-700/70 hover:border-slate-500'
                   }`}
                 >
-                  <div className="flex items-center justify-between gap-1.5 mb-1 sm:mb-1.5">
-                    <span className={`text-[9px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 rounded border shrink-0 ${lvl.bg} ${lvl.text} ${lvl.border}`}>
+                  <div className="flex items-center justify-between gap-1.5 mb-1.5">
+                    <span className={`text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded-md border shrink-0 ${lvl.bg} ${lvl.text} ${lvl.border}`}>
                       {lvl.key}
                     </span>
-                    <span className="text-[11px] sm:text-xs text-slate-400 font-semibold shrink-0">{count} Siswa</span>
+                    <span className="text-[11px] sm:text-xs text-slate-300 font-bold shrink-0">{count} Siswa</span>
                   </div>
                   <h4 className="font-bold text-white text-xs sm:text-sm truncate" title={customName}>
                     {customName}
                   </h4>
-                  <p className="text-[9px] sm:text-[10px] text-slate-400 mt-0.5 sm:mt-1 truncate">
+                  <p className="text-[9px] sm:text-[10px] text-slate-400 mt-1 truncate">
                     Status: TA {settings.academicYear}
                   </p>
                 </div>
@@ -331,7 +336,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3.5">
         
         {/* Total Students */}
-        <div className={`${combinedCardStyle} flex items-center justify-between gap-2 min-w-0`}>
+        <div className={`${combinedCardStyle} flex items-center justify-between gap-2 min-w-0 h-full`}>
           <div className="min-w-0 flex-1">
             <span className="text-[11px] sm:text-xs font-medium text-slate-400 block truncate">Total Siswa ({activeLevel})</span>
             <div className="text-lg sm:text-2xl font-extrabold text-white mt-0.5 sm:mt-1 leading-tight">{totalStudents}</div>
@@ -345,7 +350,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
         </div>
 
         {/* Academic Average */}
-        <div className={`${combinedCardStyle} flex items-center justify-between gap-2 min-w-0`}>
+        <div className={`${combinedCardStyle} flex items-center justify-between gap-2 min-w-0 h-full`}>
           <div className="min-w-0 flex-1">
             <span className="text-[11px] sm:text-xs font-medium text-slate-400 block truncate">Rata-Rata Nilai</span>
             <div className="text-lg sm:text-2xl font-extrabold text-white mt-0.5 sm:mt-1 leading-tight">{avgGrade} <span className="text-[10px] sm:text-xs text-slate-400 font-normal">/100</span></div>
@@ -359,7 +364,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
         </div>
 
         {/* Attendance Rate */}
-        <div className={`${combinedCardStyle} flex items-center justify-between gap-2 min-w-0`}>
+        <div className={`${combinedCardStyle} flex items-center justify-between gap-2 min-w-0 h-full`}>
           <div className="min-w-0 flex-1">
             <span className="text-[11px] sm:text-xs font-medium text-slate-400 block truncate">Presensi Hari Ini</span>
             <div className="text-lg sm:text-2xl font-extrabold text-white mt-0.5 sm:mt-1 leading-tight">{attendanceRate}%</div>
@@ -373,7 +378,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
         </div>
 
         {/* Tuition Payment Status */}
-        <div className={`${combinedCardStyle} flex items-center justify-between gap-2 min-w-0`}>
+        <div className={`${combinedCardStyle} flex items-center justify-between gap-2 min-w-0 h-full`}>
           <div className="min-w-0 flex-1">
             <span className="text-[11px] sm:text-xs font-medium text-slate-400 block truncate">Pelunasan SPP</span>
             <div className="text-lg sm:text-2xl font-extrabold text-white mt-0.5 sm:mt-1 leading-tight">{tuitionPaidPercent}%</div>
@@ -474,10 +479,15 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
         
         {/* Left Column: Announcements */}
         <div className={`lg:col-span-2 ${combinedCardStyle} space-y-4 min-w-0`}>
-          <div className="flex items-center justify-between gap-2">
-            <h3 className="font-bold text-xs sm:text-sm text-white flex items-center gap-2 truncate">
-              <Megaphone className="w-4 h-4 text-amber-400 shrink-0" /> Pengumuman Resmi Yayasan & Sekolah
-            </h3>
+          <div className="flex items-center justify-between gap-2 border-b border-slate-800 pb-3">
+            <div className="min-w-0">
+              <h3 className="font-bold text-xs sm:text-sm text-white flex items-center gap-2 truncate">
+                <Megaphone className="w-4 h-4 text-amber-400 shrink-0" /> Pengumuman Resmi Yayasan & Sekolah
+              </h3>
+              <p className="text-[10px] text-slate-400 truncate">
+                Informasi penting, edaran, dan agenda kegiatan sekolah
+              </p>
+            </div>
             <button
               onClick={() => onNavigate('announcements')}
               className="text-xs text-blue-400 hover:underline flex items-center gap-1 font-semibold shrink-0"
@@ -511,10 +521,15 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
         {/* Right Column: Realtime Logs */}
         {settings.showRealtimeLogs !== false && (
           <div className={`${combinedCardStyle} space-y-4 min-w-0`}>
-            <div className="flex items-center justify-between gap-2">
-              <h3 className="font-bold text-xs sm:text-sm text-white flex items-center gap-2 truncate">
-                <Bell className="w-4 h-4 text-rose-400 shrink-0" /> Log Aktivitas Real-time
-              </h3>
+            <div className="flex items-center justify-between gap-2 border-b border-slate-800 pb-3">
+              <div className="min-w-0">
+                <h3 className="font-bold text-xs sm:text-sm text-white flex items-center gap-2 truncate">
+                  <Bell className="w-4 h-4 text-rose-400 shrink-0" /> Log Aktivitas Real-time
+                </h3>
+                <p className="text-[10px] text-slate-400 truncate">
+                  Pantauan kehadiran siswa & presensi QR Code
+                </p>
+              </div>
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
             </div>
 
