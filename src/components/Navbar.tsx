@@ -222,31 +222,36 @@ export const Navbar: React.FC<NavbarProps> = ({
               </button>
 
               {showNotifDropdown && (
-                <div className="fixed inset-x-3 top-16 sm:absolute sm:inset-auto sm:right-0 sm:top-full sm:mt-2 w-auto sm:w-96 max-w-[calc(100vw-1.5rem)] bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl p-4 z-50 text-slate-200 animate-in fade-in zoom-in-95 duration-150 max-h-[80vh] flex flex-col">
-                  <div className="flex items-center justify-between pb-3 border-b border-slate-800 shrink-0">
-                    <h3 className="font-bold text-sm flex items-center gap-2">
-                      <Bell className="w-4 h-4 text-amber-400" /> Notifikasi & Alert
-                    </h3>
-                    <div className="flex items-center gap-2">
-                      {visibleNotifications.length > 0 && (
+                <>
+                  <div
+                    className="fixed inset-0 bg-slate-950/60 sm:hidden z-40 backdrop-blur-xs"
+                    onClick={() => setShowNotifDropdown(false)}
+                  />
+                  <div className="fixed inset-x-2.5 top-14 sm:absolute sm:inset-auto sm:right-0 sm:top-full sm:mt-2 w-auto sm:w-96 max-w-[calc(100vw-1.25rem)] bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl p-3.5 sm:p-4 z-50 text-slate-200 animate-in fade-in zoom-in-95 duration-150 max-h-[calc(100vh-4.5rem)] sm:max-h-[80vh] flex flex-col">
+                    <div className="flex items-center justify-between pb-3 border-b border-slate-800 shrink-0">
+                      <h3 className="font-bold text-sm flex items-center gap-2">
+                        <Bell className="w-4 h-4 text-amber-400" /> Notifikasi & Alert
+                      </h3>
+                      <div className="flex items-center gap-2">
+                        {visibleNotifications.length > 0 && (
+                          <button
+                            onClick={() => setDismissedNotifIds(notifications.map(n => n.id))}
+                            className="text-[10px] text-slate-400 hover:text-amber-300 underline font-medium transition cursor-pointer"
+                          >
+                            Bersihkan Semua
+                          </button>
+                        )}
                         <button
-                          onClick={() => setDismissedNotifIds(notifications.map(n => n.id))}
-                          className="text-[10px] text-slate-400 hover:text-amber-300 underline font-medium transition cursor-pointer"
+                          onClick={() => setShowNotifDropdown(false)}
+                          className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition cursor-pointer"
+                          title="Tutup Menu Notifikasi"
                         >
-                          Bersihkan Semua
+                          <X className="w-4 h-4" />
                         </button>
-                      )}
-                      <button
-                        onClick={() => setShowNotifDropdown(false)}
-                        className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition cursor-pointer"
-                        title="Tutup Menu Notifikasi"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
+                      </div>
                     </div>
-                  </div>
 
-                  <div className="mt-3 space-y-2.5 overflow-y-auto pr-1 flex-1 max-h-[60vh] sm:max-h-72">
+                    <div className="mt-3 space-y-2.5 overflow-y-auto pr-1 flex-1 max-h-[calc(100vh-10rem)] sm:max-h-72">
                     {visibleNotifications.length === 0 ? (
                       <div className="p-6 text-center text-slate-400 text-xs font-medium">
                         Tidak ada notifikasi aktif saat ini.
@@ -286,7 +291,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                     )}
                   </div>
                 </div>
-              )}
+              </>
+            )}
             </div>
 
             {/* User Profile Badge & Logout Menu */}
