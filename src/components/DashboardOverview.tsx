@@ -31,7 +31,8 @@ import {
   Save,
   Send,
   Info,
-  ShieldCheck
+  ShieldCheck,
+  Trash2
 } from 'lucide-react';
 import { Student, Grade, AttendanceRecord, TuitionRecord, PPDBApplication, Announcement, UserProfile, SchoolSettings, EducationLevel, CalendarEvent } from '../types';
 import { ActiveTab } from './Sidebar';
@@ -116,6 +117,28 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
     setShowBroadcastModal(false);
     setDismissBroadcast(false);
     alert('Alert Pemberitahuan Dashboard berhasil disebarkan!');
+  };
+
+  const handleDeleteBroadcast = () => {
+    if (window.confirm('Apakah Anda yakin ingin MENGHAPUS / MATIKAN peringatan broadcast ini secara permanen untuk seluruh pengguna?')) {
+      const emptyBroadcast = {
+        active: false,
+        title: '',
+        message: '',
+        type: 'warning' as const,
+        date: ''
+      };
+
+      if (onUpdateSettings) {
+        onUpdateSettings({ broadcastNotification: emptyBroadcast });
+      }
+
+      setAlertActive(false);
+      setAlertTitle('');
+      setAlertMessage('');
+      setDismissBroadcast(true);
+      setShowBroadcastModal(false);
+    }
   };
 
   // Filter data by active level
@@ -279,14 +302,25 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
 
             <div className="flex items-center gap-2 shrink-0">
               {isAdminOrSuper && (
-                <button
-                  onClick={() => setShowBroadcastModal(true)}
-                  className="px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 hover:text-amber-200 text-xs font-bold border border-amber-500/40 rounded-xl flex items-center gap-1.5 shadow-md transition shrink-0"
-                  id="btn-edit-broadcast"
-                >
-                  <Edit className="w-3.5 h-3.5" />
-                  <span>Edit Alert</span>
-                </button>
+                <>
+                  <button
+                    onClick={() => setShowBroadcastModal(true)}
+                    className="px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 hover:text-amber-200 text-xs font-bold border border-amber-500/40 rounded-xl flex items-center gap-1.5 shadow-md transition shrink-0"
+                    id="btn-edit-broadcast"
+                  >
+                    <Edit className="w-3.5 h-3.5" />
+                    <span>Edit Alert</span>
+                  </button>
+                  <button
+                    onClick={handleDeleteBroadcast}
+                    className="px-3 py-1.5 bg-rose-600/30 hover:bg-rose-600/50 text-rose-200 text-xs font-bold border border-rose-500/50 rounded-xl flex items-center gap-1.5 shadow-md transition shrink-0"
+                    id="btn-delete-broadcast"
+                    title="Hapus Broadcast Permanen Untuk Semua Pengguna"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Hapus</span>
+                  </button>
+                </>
               )}
 
               <button
@@ -372,21 +406,34 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
                 </div>
               </div>
 
-              <div className="pt-3 border-t border-slate-800 flex justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShowBroadcastModal(false)}
-                  className="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl hover:bg-slate-700 font-semibold"
-                >
-                  Batal
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2 bg-amber-600 hover:bg-amber-500 text-white rounded-xl font-bold shadow-lg shadow-amber-600/30 flex items-center gap-2"
-                >
-                  <Send className="w-4 h-4" />
-                  <span>Sebarkan Alert Card</span>
-                </button>
+              <div className="pt-3 border-t border-slate-800 flex items-center justify-between gap-2">
+                {broadcastAlert?.active ? (
+                  <button
+                    type="button"
+                    onClick={handleDeleteBroadcast}
+                    className="px-3.5 py-2 bg-rose-600/20 hover:bg-rose-600/30 text-rose-300 border border-rose-500/30 rounded-xl font-bold flex items-center gap-1.5 transition"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    <span>Hapus Broadcast</span>
+                  </button>
+                ) : <div />}
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowBroadcastModal(false)}
+                    className="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl hover:bg-slate-700 font-semibold"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-5 py-2 bg-amber-600 hover:bg-amber-500 text-white rounded-xl font-bold shadow-lg shadow-amber-600/30 flex items-center gap-2"
+                  >
+                    <Send className="w-4 h-4" />
+                    <span>Sebarkan Alert Card</span>
+                  </button>
+                </div>
               </div>
             </form>
           </div>
