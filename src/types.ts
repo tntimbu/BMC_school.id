@@ -326,6 +326,10 @@ export interface SchoolSettings {
   apiKey: string;
   firebaseProjectId?: string;
   firebaseConnected?: boolean;
+  googleSpreadsheetId?: string;
+  googleDriveFolderId?: string;
+  googleServiceAccountEmail?: string;
+  googleSyncStatus?: 'Terhubung' | 'Terputus' | 'Sinkronisasi';
   paymentSettings?: PaymentMethodsSettings;
   // Custom Logo & Kop Surat Rapor
   logoUrl?: string;

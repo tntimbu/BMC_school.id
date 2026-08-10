@@ -57,50 +57,30 @@ import { UserProfileModal } from './components/UserProfileModal';
 import { ShieldCheck, Activity, Lock, Cloud, Cpu, Crown, ShieldAlert } from 'lucide-react';
 
 export default function App() {
+  // Helper function to broadcast state sync across browser windows/tabs
+  const broadcastStateSync = (type: string, data: any) => {
+    try {
+      const channel = new BroadcastChannel('siakad_realtime_channel');
+      channel.postMessage({ type, data, timestamp: Date.now() });
+      channel.close();
+    } catch (err) {}
+  };
+
   const [settings, setSettings] = useState<SchoolSettings>(() => {
-    const saved = localStorage.getItem('siakad_school_settings');
-    if (saved) {
-      try {
-        return { ...initialSchoolSettings, ...JSON.parse(saved) };
-      } catch (err) {}
-    }
+    try {
+      const saved = localStorage.getItem('siakad_school_settings');
+      if (saved) return { ...initialSchoolSettings, ...JSON.parse(saved) };
+    } catch (err) {}
     return initialSchoolSettings;
   });
 
-  useEffect(() => {
-    try {
-      localStorage.setItem('siakad_school_settings', JSON.stringify(settings));
-    } catch (err) {}
-  }, [settings]);
-
-  useEffect(() => {
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'siakad_school_settings' && e.newValue) {
-        try {
-          const parsed = JSON.parse(e.newValue);
-          setSettings(parsed);
-        } catch (err) {}
-      }
-    };
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
-
   const [users, setUsers] = useState<UserProfile[]>(() => {
-    const saved = localStorage.getItem('siakad_users');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (err) {}
-    }
+    try {
+      const saved = localStorage.getItem('siakad_users');
+      if (saved) return JSON.parse(saved);
+    } catch (err) {}
     return initialUsers;
   });
-
-  useEffect(() => {
-    try {
-      localStorage.setItem('siakad_users', JSON.stringify(users));
-    } catch (err) {}
-  }, [users]);
 
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(() => {
     try {
@@ -142,14 +122,71 @@ export default function App() {
       setCurrentUser(updatedUser);
     }
   };
-  const [students, setStudents] = useState<Student[]>(initialStudents);
-  const [grades, setGrades] = useState<Grade[]>(initialGrades);
-  const [attendance, setAttendance] = useState<AttendanceRecord[]>(initialAttendance);
-  const [tuition, setTuition] = useState<TuitionRecord[]>(initialTuition);
-  const [announcements, setAnnouncements] = useState<Announcement[]>(initialAnnouncements);
-  const [ppdb, setPpdb] = useState<PPDBApplication[]>(initialPPDB);
-  const [events, setEvents] = useState<CalendarEvent[]>(initialCalendar);
-  const [notifications, setNotifications] = useState<NotificationLog[]>(initialNotifications);
+
+  const [students, setStudents] = useState<Student[]>(() => {
+    try {
+      const saved = localStorage.getItem('siakad_students');
+      if (saved) return JSON.parse(saved);
+    } catch (err) {}
+    return initialStudents;
+  });
+
+  const [grades, setGrades] = useState<Grade[]>(() => {
+    try {
+      const saved = localStorage.getItem('siakad_grades');
+      if (saved) return JSON.parse(saved);
+    } catch (err) {}
+    return initialGrades;
+  });
+
+  const [attendance, setAttendance] = useState<AttendanceRecord[]>(() => {
+    try {
+      const saved = localStorage.getItem('siakad_attendance');
+      if (saved) return JSON.parse(saved);
+    } catch (err) {}
+    return initialAttendance;
+  });
+
+  const [tuition, setTuition] = useState<TuitionRecord[]>(() => {
+    try {
+      const saved = localStorage.getItem('siakad_tuition');
+      if (saved) return JSON.parse(saved);
+    } catch (err) {}
+    return initialTuition;
+  });
+
+  const [announcements, setAnnouncements] = useState<Announcement[]>(() => {
+    try {
+      const saved = localStorage.getItem('siakad_announcements');
+      if (saved) return JSON.parse(saved);
+    } catch (err) {}
+    return initialAnnouncements;
+  });
+
+  const [ppdb, setPpdb] = useState<PPDBApplication[]>(() => {
+    try {
+      const saved = localStorage.getItem('siakad_ppdb');
+      if (saved) return JSON.parse(saved);
+    } catch (err) {}
+    return initialPPDB;
+  });
+
+  const [events, setEvents] = useState<CalendarEvent[]>(() => {
+    try {
+      const saved = localStorage.getItem('siakad_events');
+      if (saved) return JSON.parse(saved);
+    } catch (err) {}
+    return initialCalendar;
+  });
+
+  const [notifications, setNotifications] = useState<NotificationLog[]>(() => {
+    try {
+      const saved = localStorage.getItem('siakad_notifications');
+      if (saved) return JSON.parse(saved);
+    } catch (err) {}
+    return initialNotifications;
+  });
+
   const [dknGrades, setDknGrades] = useState<DKNRecord[]>(initialDKN);
   const [characterAssessments, setCharacterAssessments] = useState<Record<string, CharacterAssessment[]>>(initialCharacterAssessments);
   const [spiritualJourney, setSpiritualJourney] = useState<Record<string, SpiritualJourneyRecord>>(initialSpiritualJourney);
@@ -160,6 +197,123 @@ export default function App() {
   const [mobileOpen, setMobileOpen] = useState<boolean>(false);
   const [darkMode, setDarkMode] = useState<boolean>(true);
   const [language, setLanguage] = useState<'id' | 'en'>('id');
+
+  // Persistence & Real-time Synchronization Effects
+  useEffect(() => {
+    try {
+      localStorage.setItem('siakad_school_settings', JSON.stringify(settings));
+      broadcastStateSync('SYNC_SETTINGS', settings);
+    } catch (err) {}
+  }, [settings]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('siakad_users', JSON.stringify(users));
+      broadcastStateSync('SYNC_USERS', users);
+    } catch (err) {}
+  }, [users]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('siakad_students', JSON.stringify(students));
+      broadcastStateSync('SYNC_STUDENTS', students);
+    } catch (err) {}
+  }, [students]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('siakad_grades', JSON.stringify(grades));
+      broadcastStateSync('SYNC_GRADES', grades);
+    } catch (err) {}
+  }, [grades]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('siakad_attendance', JSON.stringify(attendance));
+      broadcastStateSync('SYNC_ATTENDANCE', attendance);
+    } catch (err) {}
+  }, [attendance]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('siakad_tuition', JSON.stringify(tuition));
+      broadcastStateSync('SYNC_TUITION', tuition);
+    } catch (err) {}
+  }, [tuition]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('siakad_announcements', JSON.stringify(announcements));
+      broadcastStateSync('SYNC_ANNOUNCEMENTS', announcements);
+    } catch (err) {}
+  }, [announcements]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('siakad_ppdb', JSON.stringify(ppdb));
+      broadcastStateSync('SYNC_PPDB', ppdb);
+    } catch (err) {}
+  }, [ppdb]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('siakad_events', JSON.stringify(events));
+      broadcastStateSync('SYNC_EVENTS', events);
+    } catch (err) {}
+  }, [events]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('siakad_notifications', JSON.stringify(notifications));
+      broadcastStateSync('SYNC_NOTIFICATIONS', notifications);
+    } catch (err) {}
+  }, [notifications]);
+
+  // Realtime BroadcastChannel & Storage Event Multi-Tab Listener
+  useEffect(() => {
+    let channel: BroadcastChannel | null = null;
+    try {
+      channel = new BroadcastChannel('siakad_realtime_channel');
+      channel.onmessage = (event) => {
+        const { type, data } = event.data || {};
+        if (!type || !data) return;
+        if (type === 'SYNC_SETTINGS') setSettings(data);
+        else if (type === 'SYNC_USERS') setUsers(data);
+        else if (type === 'SYNC_STUDENTS') setStudents(data);
+        else if (type === 'SYNC_GRADES') setGrades(data);
+        else if (type === 'SYNC_ATTENDANCE') setAttendance(data);
+        else if (type === 'SYNC_TUITION') setTuition(data);
+        else if (type === 'SYNC_ANNOUNCEMENTS') setAnnouncements(data);
+        else if (type === 'SYNC_PPDB') setPpdb(data);
+        else if (type === 'SYNC_EVENTS') setEvents(data);
+        else if (type === 'SYNC_NOTIFICATIONS') setNotifications(data);
+      };
+    } catch (err) {}
+
+    const handleStorageChange = (e: StorageEvent) => {
+      if (!e.newValue) return;
+      try {
+        const parsed = JSON.parse(e.newValue);
+        if (e.key === 'siakad_school_settings') setSettings(parsed);
+        else if (e.key === 'siakad_users') setUsers(parsed);
+        else if (e.key === 'siakad_students') setStudents(parsed);
+        else if (e.key === 'siakad_grades') setGrades(parsed);
+        else if (e.key === 'siakad_attendance') setAttendance(parsed);
+        else if (e.key === 'siakad_tuition') setTuition(parsed);
+        else if (e.key === 'siakad_announcements') setAnnouncements(parsed);
+        else if (e.key === 'siakad_ppdb') setPpdb(parsed);
+        else if (e.key === 'siakad_events') setEvents(parsed);
+        else if (e.key === 'siakad_notifications') setNotifications(parsed);
+      } catch (err) {}
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      if (channel) channel.close();
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
 
   useEffect(() => {
     if (darkMode) {

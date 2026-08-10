@@ -114,6 +114,10 @@ export const initialSchoolSettings: SchoolSettings = {
   apiKey: 'sk_live_nusantara_8f9a2b3c4d5e6f7a8b9c0d',
   firebaseProjectId: 'yayasan-nusantara-siakad-prod',
   firebaseConnected: true,
+  googleSpreadsheetId: '1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms_SIAKAD',
+  googleDriveFolderId: '1DriveFolder_YayasanNusantara_Backup_2026',
+  googleServiceAccountEmail: 'siakad-sync-bot@yayasan-nusantara-siakad-prod.iam.gserviceaccount.com',
+  googleSyncStatus: 'Terhubung',
   paymentSettings: {
     bankAccounts: [
       {
